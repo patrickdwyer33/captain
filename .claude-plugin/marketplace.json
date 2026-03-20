@@ -1,0 +1,18 @@
+{
+  "name": "captain",
+  "description": "Task and project management skills for Claude Code",
+  "owner": {
+    "name": "Patrick Dwyer"
+  },
+  "plugins": [
+    {
+      "name": "captain",
+      "description": "Task and project management skills for Claude Code. Requires superpowers plugin.",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Patrick Dwyer"
+      }
+    }
+  ]
+}

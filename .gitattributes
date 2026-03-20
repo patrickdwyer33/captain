@@ -1,0 +1,8 @@
+# Ensure all text files use LF line endings
+*.md text eol=lf
+*.json text eol=lf
+*.sh text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
