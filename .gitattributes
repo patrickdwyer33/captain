@@ -1,3 +1,5 @@
+* text=auto eol=lf
+
 # Ensure all text files use LF line endings
 *.md text eol=lf
 *.json text eol=lf

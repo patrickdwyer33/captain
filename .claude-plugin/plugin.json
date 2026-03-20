@@ -3,7 +3,8 @@
   "description": "Task and project management skills for Claude Code. Requires superpowers plugin.",
   "version": "1.0.0",
   "author": {
-    "name": "Patrick Dwyer"
+    "name": "Patrick Dwyer",
+    "email": "patrick@patrickdwyer.com"
   },
   "homepage": "https://github.com/patrickdwyer33/captain",
   "repository": "https://github.com/patrickdwyer33/captain",

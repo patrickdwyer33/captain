@@ -2,7 +2,8 @@
   "name": "captain",
   "description": "Task and project management skills for Claude Code",
   "owner": {
-    "name": "Patrick Dwyer"
+    "name": "Patrick Dwyer",
+    "email": "patrick@patrickdwyer.com"
   },
   "plugins": [
     {
@@ -11,7 +12,8 @@
       "version": "1.0.0",
       "source": "./",
       "author": {
-        "name": "Patrick Dwyer"
+        "name": "Patrick Dwyer",
+        "email": "patrick@patrickdwyer.com"
       }
     }
   ]
