@@ -23,5 +23,5 @@ Begin implementing a task recorded in `TASKS.md` at the root of the current proj
 
 ## Notes
 
-- Keep the DONE criteria minimal — just implementation + calling `finish-task`. Doc updates and cleanup are handled by `finish-task`, not baked into the brainstorming plan.
-- If the task is too large to complete in one session, update `TASKS.md` to reflect remaining phases instead of removing it, and skip `finish-task` until the task is fully done.
+- Keep the DONE criteria minimal — just implementation + calling `captain:finish-task`. Doc updates and cleanup are handled by `captain:finish-task`, not baked into the brainstorming plan.
+- If the task is too large to complete in one session, update `TASKS.md` to reflect remaining phases instead of removing it, and skip `captain:finish-task` until the task is fully done.
