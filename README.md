@@ -7,14 +7,14 @@ Task and project management skills for Claude Code.
 The `superpowers` plugin must be installed before captain. Install it first:
 
 ```
-claude plugin marketplace add github:obra/superpowers-marketplace
+claude plugin marketplace add obra/superpowers-marketplace
 claude plugin install superpowers
 ```
 
 ## Installation
 
 ```
-claude plugin marketplace add github:patrickdwyer33/captain
+claude plugin marketplace add patrickdwyer33/captain
 claude plugin install captain
 ```
 
