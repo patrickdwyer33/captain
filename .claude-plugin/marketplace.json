@@ -10,7 +10,10 @@
       "name": "captain",
       "description": "Task and project management skills for Claude Code. Requires superpowers plugin.",
       "version": "1.0.0",
-      "source": "./",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/patrickdwyer33/captain.git"
+      },
       "author": {
         "name": "Patrick Dwyer",
         "email": "patrick@patrickdwyer.com"
