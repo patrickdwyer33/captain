@@ -23,9 +23,9 @@ claude plugin install captain
 | Skill | Description |
 |---|---|
 | `captain:create-task` | Add a new task to `TASKS.md` |
-| `captain:remove-task` | Remove a task from `TASKS.md` |
+| `captain:remove-task` | Move a completed task to the Completed Tasks section, or delete a cancelled task |
 | `captain:start-task` | Begin implementing a task; invokes `superpowers:brainstorming` |
-| `captain:finish-task` | Post-implementation cleanup: update docs, remove task/gaps |
+| `captain:finish-task` | Post-implementation cleanup: update docs, move task to Completed, clean gaps |
 | `captain:save-code-gap` | Record a stub or unimplemented function in `GAPS.md` |
 | `captain:remove-code-gap` | Remove a resolved gap from `GAPS.md` |
 | `captain:init-project-docs` | Initialize standard project docs at the project root |

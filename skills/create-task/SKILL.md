@@ -9,7 +9,7 @@ Add a new task entry to `TASKS.md` at the root of the current project.
 
 ## Steps
 
-1. **Locate TASKS.md** — find `TASKS.md` at the root of the current working project (the nearest ancestor directory containing a `CLAUDE.md`, `package.json`, `Cargo.toml`, or `.git`). If none exists, create it with a `# Tasks` header.
+1. **Locate TASKS.md** — find `TASKS.md` at the root of the current working project (the nearest ancestor directory containing a `CLAUDE.md`, `package.json`, `Cargo.toml`, or `.git`). If none exists, create it with a `# Outstanding Tasks` header and a `# Completed Tasks` section.
 
 2. **Determine the next task number** — count existing `## Task N:` headings in `TASKS.md` and increment by 1.
 
@@ -20,7 +20,7 @@ Add a new task entry to `TASKS.md` at the root of the current project.
    - Notes (constraints, dependencies, decisions already made — optional)
    - Phases or sub-steps (optional — use if the task has distinct stages)
 
-4. **Write the entry** — append to `TASKS.md` using this format:
+4. **Write the entry** — insert into the `# Outstanding Tasks` section of `TASKS.md` (before the `# Completed Tasks` section) at the end of the active tasks list, using this format:
 
 ```markdown
 ## Task 3: Task Name
@@ -49,5 +49,5 @@ Add a new task entry to `TASKS.md` at the root of the current project.
 
 - Never overwrite existing tasks.
 - Never reuse or reorder task numbers — numbers are permanent identifiers, not rankings.
-- Append new tasks at the end of the file, before any trailing footer links (e.g. `See also:` lines).
+- Insert new tasks at the end of the `# Outstanding Tasks` section, just before the `# Completed Tasks` section. Outstanding tasks are ordered ascending (lowest number first, highest last).
 - Use present-tense imperative phrasing for task names (e.g. "Add rate limiting", not "Rate limiting added").

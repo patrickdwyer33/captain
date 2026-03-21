@@ -53,14 +53,17 @@ Ensure all standard project documentation files and directories exist at the pro
 5. **TASKS.md** — check if it exists.
    - If missing, create it:
      ```markdown
-     # Tasks
+     # Outstanding Tasks
 
      See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEAS.md) — long-term ideas
+
+     # Completed Tasks
      ```
    - If it exists, verify:
-     - Has a `# Tasks` header
+     - Has a `# Outstanding Tasks` header
+     - Has a `# Completed Tasks` section (add it at the bottom if missing)
      - All task headings follow the format `## Task N: Task Name` (sequential integers, colon separator)
-     - Has the `See also:` footer line (add it if missing)
+     - Has the `See also:` footer line after `# Outstanding Tasks` (add it if missing)
      - Warn the user about any headings that don't conform but do NOT auto-rename them — ask first.
 
 6. **TODO.md** — check if it exists.

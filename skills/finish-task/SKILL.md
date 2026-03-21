@@ -17,7 +17,7 @@ Complete all post-implementation steps after a task is done: update every releva
    - Run doc generation scripts if present (e.g. `cargo doc`, `typedoc`)
 
 2. **Clean up tracking files** — use the task management skills:
-   - `captain:remove-task` — remove the completed task from `TASKS.md`
+   - `captain:remove-task` — move the completed task from the active section to the `# Completed` section of `TASKS.md`
    - `captain:remove-code-gap` — remove any gaps from `GAPS.md` resolved by this task
    - `captain:save-code-gap` — record any new gaps discovered during implementation
 
