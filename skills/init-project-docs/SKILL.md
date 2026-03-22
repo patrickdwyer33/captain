@@ -1,6 +1,6 @@
 ---
 name: init-project-docs
-description: Initialize standard project docs (TASKS.md, TODO.md, GAPS.md, IDEAS.md, README.md, CLAUDE.md, docs/notes/) at the project root if they don't exist, and verify existing files conform to the expected structure. Use when starting work on a project or when these files may be missing.
+description: Initialize standard project docs (MISSIONS.md, TODO.md, GAPS.md, IDEAS.md, README.md, CLAUDE.md, docs/notes/) at the project root if they don't exist, and verify existing files conform to the expected structure. Use when starting work on a project or when these files may be missing.
 ---
 
 # Init Project Docs
@@ -18,7 +18,7 @@ Ensure all standard project documentation files and directories exist at the pro
 
      | File | Purpose |
      | ---- | ------- |
-     | [TASKS.md](TASKS.md) | Structured task backlog — numbered tasks with phases and sub-items |
+     | [MISSIONS.md](MISSIONS.md) | Structured mission backlog — numbered missions with phases and sub-items |
      | [TODO.md](TODO.md) | Free-form scratchpad for quick notes, reminders, and in-progress thoughts |
      | [GAPS.md](GAPS.md) | Known code stubs, unimplemented functions, and placeholder values |
      | [IDEAS.md](IDEAS.md) | Long-term ideas and future directions, no commitment implied |
@@ -32,7 +32,7 @@ Ensure all standard project documentation files and directories exist at the pro
 
      | File | Purpose |
      | ---- | ------- |
-     | [TASKS.md](TASKS.md) | Structured task backlog — numbered tasks with phases and sub-items |
+     | [MISSIONS.md](MISSIONS.md) | Structured mission backlog — numbered missions with phases and sub-items |
      | [TODO.md](TODO.md) | Free-form scratchpad for quick notes, reminders, and in-progress thoughts |
      | [GAPS.md](GAPS.md) | Known code stubs, unimplemented functions, and placeholder values |
      | [IDEAS.md](IDEAS.md) | Long-term ideas and future directions, no commitment implied |
@@ -50,20 +50,20 @@ Ensure all standard project documentation files and directories exist at the pro
    - Create `docs/notes/` if missing.
    - Place a `.gitkeep` in `docs/notes/` if it's empty so it's tracked by git.
 
-5. **TASKS.md** — check if it exists.
+5. **MISSIONS.md** — check if it exists.
    - If missing, create it:
      ```markdown
-     # Outstanding Tasks
+     # Outstanding Missions
 
      See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEAS.md) — long-term ideas
 
-     # Completed Tasks
+     # Completed Missions
      ```
    - If it exists, verify:
-     - Has a `# Outstanding Tasks` header
-     - Has a `# Completed Tasks` section (add it at the bottom if missing)
-     - All task headings follow the format `## Task N: Task Name` (sequential integers, colon separator)
-     - Has the `See also:` footer line after `# Outstanding Tasks` (add it if missing)
+     - Has a `# Outstanding Missions` header
+     - Has a `# Completed Missions` section (add it at the bottom if missing)
+     - All mission headings follow the format `## Mission N: Mission Name` (sequential integers, colon separator)
+     - Has the `See also:` footer line after `# Outstanding Missions` (add it if missing)
      - Warn the user about any headings that don't conform but do NOT auto-rename them — ask first.
 
 6. **TODO.md** — check if it exists.
