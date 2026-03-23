@@ -29,6 +29,7 @@ claude plugin install captain
 | `captain:save-code-gap` | Record a stub or unimplemented function in `GAPS.md` |
 | `captain:remove-code-gap` | Remove a resolved gap from `GAPS.md` |
 | `captain:init-project-docs` | Initialize standard project docs at the project root |
+| `captain:new-project` | Scaffold a new project in `~/dev` with a git repo, private GitHub remote, and standard docs |
 
 ## Declaring as a Project Dependency
 
