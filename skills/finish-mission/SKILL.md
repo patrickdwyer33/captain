@@ -17,7 +17,7 @@ Complete all post-implementation steps after a mission is done: update every rel
    - Run doc generation scripts if present (e.g. `cargo doc`, `typedoc`)
 
 2. **Clean up tracking files** — use the mission management skills:
-   - `captain:remove-mission` — move the completed mission from the active section to the `# Completed` section of `MISSIONS.md`
+   - `captain:remove-mission` — invoke the **complete path** directly (this is always a completion, not a deletion — skip the "done or cancelling?" prompt and proceed straight to the Complete path steps)
    - `captain:remove-code-gap` — remove any gaps from `GAPS.md` resolved by this mission
    - `captain:save-code-gap` — record any new gaps discovered during implementation
 
