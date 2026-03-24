@@ -1,30 +1,81 @@
 ---
 name: remove-mission
-description: Remove a mission from the project's MISSIONS.md. Use when a mission is complete, cancelled, or no longer relevant. Removes the full H2 section for the mission.
+description: Remove a mission from the JSONL mission store. Moves completed missions to .captain/completed.jsonl and regenerates both MISSIONS.md and COMPLETED.md. Permanently deletes cancelled missions.
 ---
 
 # Remove Mission
 
-Move a completed mission from the active section to the `# Completed` section of `MISSIONS.md`, or permanently delete a cancelled mission.
+Move a completed mission to `.captain/completed.jsonl`, or permanently delete a cancelled mission from `.captain/missions.jsonl`. Regenerates `MISSIONS.md` and `COMPLETED.md` after any mutation.
 
 ## Steps
 
-1. **Locate MISSIONS.md** — find `MISSIONS.md` at the root of the current working project (nearest ancestor with `CLAUDE.md`, `package.json`, `Cargo.toml`, or `.git`).
+1. **Check for jq** — run `command -v jq`. If missing, show install instructions (same as `captain:create-mission` step 1) and abort.
 
-2. **Identify the mission** — read `MISSIONS.md` and list the available mission headings (`## Mission N: ...`) if the user hasn't specified which one to remove. The user may refer to a mission by number or name. Ask to confirm if there's any ambiguity.
+2. **Identify the mission** — if the user hasn't specified which mission, read `MISSIONS.md` and list the available headings. Confirm if there's any ambiguity.
 
-3. **Determine disposition** — if the mission is complete, move it to the `# Completed Missions` section. If it is cancelled or no longer relevant, delete it permanently. When called from `captain:finish-mission`, always move to Completed Missions.
+3. **Determine disposition** — ask: *"Is this mission done (move to Completed), or are you cancelling/deleting it?"*
+   - If **completed**: follow the Complete path below.
+   - If **cancelled/deleted**: follow the Delete path below.
+   - When called from `captain:finish-mission`, always use the Complete path — skip this question.
 
-4. **Move or delete the section**:
-   - **Move to Completed Missions**: Remove the `## Mission N: Name` section from the `# Outstanding Missions` area, then insert it at the top of the `# Completed Missions` section (just after the `# Completed Missions` heading). Completed missions are ordered descending — highest mission number first.
-   - **Delete**: Remove the entire `## Mission N: Name` section (heading, description, all phases and bullets, trailing blank lines). Do NOT renumber remaining missions.
+### Complete path
 
-5. **Confirm** — tell the user what happened and show the updated outstanding mission list (remaining headings only).
+4. **Validate the mission exists**:
+   ```bash
+   FOUND=$(jq -rs --argjson id N '[.[] | select(.id == $id)] | length' .captain/missions.jsonl)
+   [ "$FOUND" -eq 0 ] && echo "Mission N not found" && exit 1
+   ```
+   (`N` is the integer mission id throughout this skill.)
+
+5. **Build the completed record**:
+   ```bash
+   TODAY=$(date +%Y-%m-%d)
+   RECORD=$(jq -c --argjson id N --arg d "$TODAY" \
+     'select(.id == $id) | . + {completed_at: $d}' .captain/missions.jsonl)
+   ```
+   Since ids are unique, `select` produces exactly one record.
+
+6. **Remove from `.captain/missions.jsonl` first** (before writing to completed.jsonl — if the append later fails, the user manually re-adds to completed.jsonl using the original id rather than dealing with a duplicate):
+   ```bash
+   jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl \
+     > .captain/missions.jsonl.tmp \
+     && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
+   ```
+
+7. **Append to `.captain/completed.jsonl`**:
+   ```bash
+   { cat .captain/completed.jsonl 2>/dev/null; printf '%s\n' "$RECORD"; } \
+     | jq -c '.' > .captain/completed.jsonl.tmp \
+     && mv .captain/completed.jsonl.tmp .captain/completed.jsonl
+   ```
+
+8. **Regenerate markdown**:
+   ```bash
+   bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+   ```
+
+9. **Confirm** — tell the user the mission was moved to Completed.
+
+### Delete path
+
+4. **Validate the mission exists** (same length-check as Complete path step 4).
+
+5. **Remove from `.captain/missions.jsonl`**:
+   ```bash
+   jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl \
+     > .captain/missions.jsonl.tmp \
+     && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
+   ```
+
+6. **Regenerate markdown**:
+   ```bash
+   bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+   ```
+
+7. **Confirm** — tell the user the mission was permanently deleted.
 
 ## Notes
 
-- Never remove the `# Outstanding Missions` or `# Completed Missions` section headers.
-- Never remove the `See also:` footer line if present.
-- If the mission doesn't exist in either section, say so — don't silently do nothing.
-- If the mission is partially done, ask the user whether to move it to Completed or leave it active.
-- Do NOT renumber missions — numbers are permanent identifiers.
+- Never remove the `.captain/` directory or JSONL files.
+- Do NOT renumber missions — ids are permanent.
+- If the mission doesn't exist in `.captain/missions.jsonl`, say so and abort.
