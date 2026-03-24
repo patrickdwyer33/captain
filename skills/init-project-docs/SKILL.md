@@ -51,14 +51,7 @@ Ensure all standard project documentation files and directories exist at the pro
    - Place a `.gitkeep` in `docs/notes/` if it's empty so it's tracked by git.
 
 5. **MISSIONS.md** — check if it exists.
-   - If missing, create it:
-     ```markdown
-     # Outstanding Missions
-
-     See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEAS.md) — long-term ideas
-
-     # Completed Missions
-     ```
+   - If missing, it will be created by the generate script in step 9. Do not create it manually.
    - If it exists, verify:
      - Has a `# Outstanding Missions` header
      - Has a `# Completed Missions` section (add it at the bottom if missing)
@@ -84,4 +77,14 @@ Ensure all standard project documentation files and directories exist at the pro
    - If missing, create it with only a `# Ideas` header and nothing else.
    - If it exists, leave it alone — there is no enforced structure.
 
-9. **Confirm** — report which files/directories were created, which already existed, and any structural issues found.
+9. **`.captain/` directory and JSONL files** — check if `.captain/` exists at the project root.
+   - If missing, create it: `mkdir -p .captain`
+   - Create `.captain/missions.jsonl` if missing: `touch .captain/missions.jsonl`
+   - Create `.captain/completed.jsonl` if missing: `touch .captain/completed.jsonl`
+   - Check `.gitignore`: if `.captain` or `.captain/` appears there, warn the user — these files are the source of truth and must be committed to the repo.
+   - Run the generate script to produce `MISSIONS.md` and `COMPLETED.md`:
+     ```bash
+     bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+     ```
+
+10. **Confirm** — report which files/directories were created, which already existed, and any structural issues found. Include the `.captain/` directory and JSONL files in the report.
