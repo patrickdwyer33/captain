@@ -69,7 +69,7 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 [body rendered verbatim, JSON-unescaped, preceded by a blank line] (omitted if field absent)
 ```
 
-**`COMPLETED.md` output format** — completed missions in descending id order (highest first):
+**`COMPLETED.md` output format** — completed missions in descending id order (highest id first). Sort key is `id`, not `completed_at` — this is intentional; id order is stable and predictable.
 ```markdown
 # Completed Missions
 
@@ -86,6 +86,8 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 [body rendered verbatim, JSON-unescaped, preceded by a blank line] (omitted if field absent)
 
 **Completed:** 2026-03-24
+
+(If `body` is absent, `**Completed:**` follows immediately after the last present field, separated by a blank line.)
 ```
 
 The `body` field is emitted as raw markdown: JSON string unescaping is applied (so `\n` becomes a real newline), then the content is written verbatim, preceded by a blank line. If the unescaped body already ends with a newline, no additional newline is appended — the blank line separator before the next field (or end of section) is still exactly one blank line.
@@ -96,17 +98,18 @@ The `body` field is emitted as raw markdown: JSON string unescaping is applied (
 
 1. If `.captain/`, `.captain/missions.jsonl`, or `.captain/completed.jsonl` don't exist, create them before proceeding (don't require user to run `init-project-docs` first). Creating both JSONL files ensures the id-calculation jq command always has valid inputs.
 2. Gather mission details interactively (same prompts as before)
-3. Determine next id: find the maximum `id` across both JSONL files and add 1. If both files are empty or missing, start at 1:
+3. Determine next id: find the maximum `id` across both JSONL files and add 1. Both files are guaranteed to exist after step 1 (even if empty), so the command always has valid inputs. On an empty file, `jq` produces `null` from `max`, and `// 0` yields 0:
    ```bash
-   jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl 2>/dev/null || echo 0
+   jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl
    ```
-   Then add 1.
-4. Build JSON record and append to `.captain/missions.jsonl`. Ensure a newline precedes the append to avoid corrupting the last record if the file has no trailing newline:
+   Then add 1. Result for two empty files: `0 + 1 = 1`.
+4. Build JSON record and append to `.captain/missions.jsonl`. Only prepend a newline guard if the file is non-empty (a leading blank line breaks JSONL parsers):
    ```bash
-   printf '\n' >> .captain/missions.jsonl
+   [ -s .captain/missions.jsonl ] && printf '\n' >> .captain/missions.jsonl
    echo '{"id":N,...}' >> .captain/missions.jsonl
    ```
-5. Run generate script
+   The same newline guard pattern applies when appending to `.captain/completed.jsonl`.
+5. Run generate script: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 6. Confirm to user
 
 ### `captain:remove-mission` — branch selection
@@ -121,19 +124,19 @@ The skill begins by asking the user whether the mission was completed or cancell
 ### `captain:remove-mission` (complete)
 
 1. Read the full record from `.captain/missions.jsonl` using `jq` (match by id)
-2. Add `completed_at` field with today's ISO date (all original fields preserved)
-3. Append the full updated record to `.captain/completed.jsonl` (with preceding newline guard)
+2. Add `completed_at` field with today's ISO date obtained via `$(date +%Y-%m-%d)` (all original fields preserved)
+3. Append the full updated record to `.captain/completed.jsonl` (with preceding newline guard — only if file is non-empty)
 4. Rewrite `.captain/missions.jsonl` without the completed record:
    ```bash
    jq -c '. | select(.id != N)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
    ```
-5. Run generate script
+5. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 6. Confirm to user
 
 ### `captain:remove-mission` (delete/cancel)
 
 1. Rewrite `.captain/missions.jsonl` without the deleted record (same jq pattern as above)
-2. Run generate script
+2. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 3. Confirm to user
 
 ### `captain:remove-mission` skill frontmatter
@@ -155,7 +158,7 @@ Additional steps for `.captain/` setup:
 2. Create empty `.captain/missions.jsonl` if missing
 3. Create empty `.captain/completed.jsonl` if missing
 4. Ensure `.captain/` is NOT in `.gitignore` — these files are the source of truth and must be committed
-5. Run generate script to produce initial `MISSIONS.md` and `COMPLETED.md`
+5. Run `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh` to produce initial `MISSIONS.md` and `COMPLETED.md`
 
 ### `captain:new-project`
 
@@ -174,5 +177,5 @@ No change — calls `captain:init-project-docs`.
 
 - Migration of existing `MISSIONS.md` files to JSONL (users start fresh or migrate manually)
 - A dedicated migration script
-- Validation of JSONL record integrity beyond what `jq` provides
+- Validation of JSONL record integrity beyond what `jq` provides (a `jq` parse error on a corrupted line will cause the skill to abort before any mutation — no silent data loss)
 - Any runtime other than bash + jq (both are available everywhere Claude Code runs)
