@@ -27,7 +27,8 @@ render_mission() {
   background=$(printf '%s\n' "$record" | jq -r '.background')
   notes=$(printf '%s\n' "$record" | jq -r '.notes // empty')
   depends_on=$(printf '%s\n' "$record" | jq -r 'if (.depends_on | length) > 0 then .depends_on | join(", ") else empty end')
-  body=$(printf '%s\n' "$record" | jq -r '.body // empty')
+  body=$(printf '%s\n' "$record" | jq -r '.body // empty'; printf x)
+  body="${body%x}"
 
   printf '## Mission %s: %s\n\n' "$id" "$title"
   printf '**Goal:** %s\n\n' "$goal"
@@ -63,7 +64,7 @@ render_mission() {
 
     if [ -f "$MISSIONS_JSONL" ] && [ -s "$MISSIONS_JSONL" ]; then
       while IFS= read -r record; do
-        [ -z "$record" ] && continue
+        if [ -z "$record" ]; then continue; fi
         printf '\n'
         render_mission "$record" 0
       done < <(jq -cs 'sort_by(.id)[]' "$MISSIONS_JSONL")
@@ -81,7 +82,7 @@ render_mission() {
 
     if [ -f "$COMPLETED_JSONL" ] && [ -s "$COMPLETED_JSONL" ]; then
       while IFS= read -r record; do
-        [ -z "$record" ] && continue
+        if [ -z "$record" ]; then continue; fi
         printf '\n'
         render_mission "$record" 1
       done < <(jq -cs 'sort_by(.id) | reverse | .[]' "$COMPLETED_JSONL")
