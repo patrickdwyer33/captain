@@ -88,7 +88,7 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 
 **Notes:** ... (omitted if field absent)
 
-**Depends on:** Mission 3: ..., Mission 5: ... (omitted if field absent; array joined with `, `)
+**Depends on:** Mission 3: ..., Mission 5: ... (omitted if field absent; the `depends_on` JSON array is joined with `, ` — e.g. `jq -r '.depends_on | join(", ")'`)
 
 [body rendered verbatim, JSON-unescaped, preceded by a blank line] (omitted if field absent)
 ```
@@ -153,15 +153,24 @@ All skills must check for `jq` at the start and show install instructions if mis
    NEXT_ID=$((MAX + 1))
    ```
    Both files exist from step 2, so `jq -rs` always has valid inputs. An empty file contributes zero objects; `max // 0` handles the all-empty case.
-5. Build the JSON record and write using the read-pipe-write pattern:
+5. Build the JSON record. Start with required fields, then conditionally add optional ones:
    ```bash
    NEW_RECORD=$(jq -cn --argjson id "$NEXT_ID" --arg title "..." --arg goal "..." \
      --arg background "..." '{id: $id, title: $title, goal: $goal, background: $background}')
+
+   # Add optional string fields if provided:
+   [ -n "$NOTES" ] && NEW_RECORD=$(printf '%s\n' "$NEW_RECORD" | jq -c --arg v "$NOTES" '. + {notes: $v}')
+   [ -n "$BODY"  ] && NEW_RECORD=$(printf '%s\n' "$NEW_RECORD" | jq -c --arg v "$BODY"  '. + {body: $v}')
+
+   # Add depends_on if provided (as a JSON array string, e.g. '["Mission 3: Add rate limiting"]'):
+   [ -n "$DEPENDS_ON" ] && NEW_RECORD=$(printf '%s\n' "$NEW_RECORD" | jq -c --argjson v "$DEPENDS_ON" '. + {depends_on: $v}')
+   ```
+   Write using the read-pipe-write pattern:
+   ```bash
    { cat .captain/missions.jsonl 2>/dev/null; printf '%s\n' "$NEW_RECORD"; } \
      | jq -c '.' > .captain/missions.jsonl.tmp \
      && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
    ```
-   Optional fields (`notes`, `depends_on`, `body`) are included in the record only if provided.
 6. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 7. Confirm to user
 
@@ -177,10 +186,10 @@ The skill begins by asking the user whether the mission was completed or cancell
 ### `captain:remove-mission` (complete)
 
 1. Check for `jq`. If missing, show install instructions and abort.
-2. Validate the mission exists; abort with an error if not:
+2. Validate the mission exists; abort with an error if not. `jq -e` with `select` exits 0 even when nothing matches, so use a length check instead:
    ```bash
-   jq -e --argjson id N 'select(.id == $id)' .captain/missions.jsonl > /dev/null \
-     || { echo "Mission N not found"; exit 1; }
+   FOUND=$(jq -rs --argjson id N '[.[] | select(.id == $id)] | length' .captain/missions.jsonl)
+   [ "$FOUND" -eq 0 ] && echo "Mission N not found" && exit 1
    ```
 3. Build the completed record:
    ```bash
@@ -188,17 +197,17 @@ The skill begins by asking the user whether the mission was completed or cancell
    RECORD=$(jq -c --argjson id N --arg d "$TODAY" \
      'select(.id == $id) | . + {completed_at: $d}' .captain/missions.jsonl)
    ```
-4. Append to `.captain/completed.jsonl`:
-   ```bash
-   { cat .captain/completed.jsonl 2>/dev/null; printf '%s\n' "$RECORD"; } \
-     | jq -c '.' > .captain/completed.jsonl.tmp \
-     && mv .captain/completed.jsonl.tmp .captain/completed.jsonl
-   ```
-5. Remove from `.captain/missions.jsonl`:
+4. **Remove from `.captain/missions.jsonl` first** (before writing to completed.jsonl). Doing the destructive operation first means that if the append in step 5 fails, the mission is not in either file — the user can recover by re-running with the known id rather than finding a duplicate across files:
    ```bash
    jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl \
      > .captain/missions.jsonl.tmp \
      && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
+   ```
+5. Append to `.captain/completed.jsonl`:
+   ```bash
+   { cat .captain/completed.jsonl 2>/dev/null; printf '%s\n' "$RECORD"; } \
+     | jq -c '.' > .captain/completed.jsonl.tmp \
+     && mv .captain/completed.jsonl.tmp .captain/completed.jsonl
    ```
 6. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 7. Confirm to user
@@ -206,7 +215,7 @@ The skill begins by asking the user whether the mission was completed or cancell
 ### `captain:remove-mission` (delete/cancel)
 
 1. Check for `jq`. If missing, show install instructions and abort.
-2. Validate the mission exists; abort with an error if not (same pattern as complete path step 2).
+2. Validate the mission exists; abort with an error if not (same length-check pattern as complete path step 2).
 3. Remove from `.captain/missions.jsonl`:
    ```bash
    jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl \
