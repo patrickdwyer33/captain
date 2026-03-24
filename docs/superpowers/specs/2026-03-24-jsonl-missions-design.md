@@ -31,7 +31,7 @@ Two JSONL files live in `.captain/` at the project root (hidden directory). Both
 | `background` | yes | Context and motivation |
 | `notes` | no | Constraints, decisions already made |
 | `depends_on` | no | Array of `"Mission N: Title"` strings |
-| `body` | no | Raw markdown for phases or flat bullets (JSON-escaped `\n` for newlines) |
+| `body` | no | Raw markdown for phases or flat bullets; all standard JSON escapes apply (`\n`, `\t`, `\\`, `\"`, etc.) |
 | `completed_at` | completed only | ISO date string (`YYYY-MM-DD`) added when mission completes |
 
 ## Generate Script
@@ -47,10 +47,11 @@ bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
 - Reads `.captain/missions.jsonl` → writes `MISSIONS.md`
 - Reads `.captain/completed.jsonl` → writes `COMPLETED.md`
 - Both output files are fully regenerated on every run — never hand-edited
-- Handles missing or empty JSONL files gracefully: `MISSIONS.md` contains `# Outstanding Missions` followed by a blank line and the See also line, with no mission entries; `COMPLETED.md` contains only `# Completed Missions` with no entries and no trailing content
+- Handles missing or empty JSONL files gracefully: `MISSIONS.md` contains `# Outstanding Missions` followed by a blank line and the See also line (no mission entries); `COMPLETED.md` contains only `# Completed Missions` with no entries and no trailing content. `COMPLETED.md` never has a See also line.
+- A `jq` parse error on a corrupted JSONL file causes the generate script to exit with a non-zero code and produce no output files for that run
 - **Invariant:** after any skill mutation, the generate script is always run, so `MISSIONS.md` and `COMPLETED.md` are always current
 
-**`MISSIONS.md` output format** — outstanding missions in ascending id order (lowest first):
+**`MISSIONS.md` output format** — outstanding missions in ascending id order (lowest first). Consecutive mission sections are separated by a blank line between the end of one section and the `## Mission N` heading of the next:
 ```markdown
 # Outstanding Missions
 
@@ -69,7 +70,7 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 [body rendered verbatim, JSON-unescaped, preceded by a blank line] (omitted if field absent)
 ```
 
-**`COMPLETED.md` output format** — completed missions in descending id order (highest id first). Sort key is `id`, not `completed_at` — this is intentional; id order is stable and predictable.
+**`COMPLETED.md` output format** — completed missions in descending id order (highest id first). Sort key is `id`, not `completed_at` — this is intentional; id order is stable and predictable. No See also line. Consecutive sections separated by a blank line between the end of one section and the next `## Mission N` heading.
 ```markdown
 # Completed Missions
 
@@ -99,7 +100,7 @@ When `body` is absent, `**Completed:**` follows the last present field with a si
 **Completed:** 2026-03-24
 ```
 
-The `body` field rendering rule applies to both `MISSIONS.md` and `COMPLETED.md`: JSON string unescaping is applied (so `\n` becomes a real newline), then the content is written verbatim, preceded by a blank line. If the unescaped body already ends with a newline, no additional newline is appended — the blank line separator before the next field (or end of section) is still exactly one blank line.
+The `body` field rendering rule applies to both `MISSIONS.md` and `COMPLETED.md`: all standard JSON string unescaping is applied (so `\n` → newline, `\t` → tab, `\\` → backslash, etc.), then the content is written verbatim, preceded by a blank line. Trailing newlines in the unescaped body are preserved as-is; the renderer does not strip them. The blank-line separator before the next section (or end of file) is produced naturally by the surrounding structure — not by the body's trailing content.
 
 ## Skill Changes
 
@@ -133,18 +134,18 @@ The skill begins by asking the user whether the mission was completed or cancell
 ### `captain:remove-mission` (complete)
 
 1. Validate that a record with the given id exists in `.captain/missions.jsonl`. If it does not exist, abort with an error message to the user.
-2. Build the completed record in a single `jq` call:
+2. Build the completed record in a single `jq` call. `jq` without `-s` reads JSONL line-by-line (one object per invocation), so `select` filters to the matching record:
    ```bash
    TODAY=$(date +%Y-%m-%d)
    RECORD=$(jq -c --argjson id N --arg d "$TODAY" 'select(.id == $id) | . + {completed_at: $d}' .captain/missions.jsonl)
    ```
-   This produces exactly one record. If `$RECORD` is empty (validation in step 1 prevents this), abort before writing.
+   Abort if `$RECORD` is empty (`[ -z "$RECORD" ]`) — step 1 prevents this for valid ids, but a jq error on malformed JSONL can also produce empty output.
 3. Append `$RECORD` to `.captain/completed.jsonl` using `echo` (which terminates with `\n`), with preceding newline guard only if the file is non-empty and its last byte is not `\n`:
    ```bash
    [ -s .captain/completed.jsonl ] && tail -c1 .captain/completed.jsonl | grep -qv $'\n' && printf '\n' >> .captain/completed.jsonl
    echo "$RECORD" >> .captain/completed.jsonl
    ```
-4. Rewrite `.captain/missions.jsonl` without the completed record:
+4. Rewrite `.captain/missions.jsonl` without the completed record. The `.tmp` intermediate ensures the original file is not modified until the filtered output is fully written — if `mv` fails, the original is still intact:
    ```bash
    jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
    ```
@@ -154,7 +155,7 @@ The skill begins by asking the user whether the mission was completed or cancell
 ### `captain:remove-mission` (delete/cancel)
 
 1. Validate that a record with the given id exists in `.captain/missions.jsonl`. If it does not exist, abort with an error message to the user.
-2. Rewrite `.captain/missions.jsonl` without the deleted record:
+2. Rewrite `.captain/missions.jsonl` without the deleted record (`.tmp` intermediate preserves the original if `mv` fails):
    ```bash
    jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
    ```
