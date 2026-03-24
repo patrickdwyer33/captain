@@ -28,26 +28,27 @@ assert_not_contains() {
   else
     echo "  FAIL: $label"
     echo "        did not expect '$pattern' in $file"
+    cat "$file"
     FAIL=$((FAIL + 1))
   fi
 }
 
 setup() {
-  TMPDIR=$(mktemp -d)
-  mkdir -p "$TMPDIR/.captain"
-  touch "$TMPDIR/.captain/missions.jsonl"
-  touch "$TMPDIR/.captain/completed.jsonl"
-  cd "$TMPDIR"
+  TEST_TMPDIR=$(mktemp -d)
+  mkdir -p "$TEST_TMPDIR/.captain"
+  touch "$TEST_TMPDIR/.captain/missions.jsonl"
+  touch "$TEST_TMPDIR/.captain/completed.jsonl"
+  cd "$TEST_TMPDIR"
 }
 
 teardown() {
-  rm -rf "$TMPDIR"
+  rm -rf "$TEST_TMPDIR"
 }
 
 # --- Test 1: empty files produce headers only ---
 echo "Test 1: empty files"
 setup
-bash "$GENERATE"
+bash "$GENERATE" || { echo "  FAIL: generate.sh exited non-zero"; FAIL=$((FAIL+1)); }
 assert_contains     MISSIONS.md  "^# Outstanding Missions"         "MISSIONS.md has header"
 assert_contains     MISSIONS.md  "See also:"                       "MISSIONS.md has See also line"
 assert_not_contains MISSIONS.md  "^## Mission"                     "MISSIONS.md has no mission entries"
@@ -61,7 +62,7 @@ echo "Test 2: single mission"
 setup
 printf '%s\n' '{"id":1,"title":"Add auth","goal":"Allow login.","background":"Users need accounts."}' \
   > .captain/missions.jsonl
-bash "$GENERATE"
+bash "$GENERATE" || { echo "  FAIL: generate.sh exited non-zero"; FAIL=$((FAIL+1)); }
 assert_contains MISSIONS.md "^## Mission 1: Add auth"     "mission heading"
 assert_contains MISSIONS.md "^\*\*Goal:\*\* Allow login." "goal field"
 assert_contains MISSIONS.md "^\*\*Background:\*\* Users"  "background field"
@@ -74,7 +75,7 @@ echo "Test 3: all optional fields"
 setup
 printf '%s\n' '{"id":1,"title":"Add auth","goal":"Allow login.","background":"Context.","notes":"Use OAuth.","depends_on":["Mission 2: Set up DB"],"body":"- Step one\n- Step two\n"}' \
   > .captain/missions.jsonl
-bash "$GENERATE"
+bash "$GENERATE" || { echo "  FAIL: generate.sh exited non-zero"; FAIL=$((FAIL+1)); }
 assert_contains MISSIONS.md "\*\*Notes:\*\* Use OAuth."              "notes field"
 assert_contains MISSIONS.md "\*\*Depends on:\*\* Mission 2: Set up DB" "depends_on field"
 assert_contains MISSIONS.md "- Step one"                              "body rendered"
@@ -89,7 +90,7 @@ printf '%s\n' '{"id":1,"title":"First","goal":"G1","background":"B1"}' \
   >> .captain/missions.jsonl
 printf '%s\n' '{"id":2,"title":"Second","goal":"G2","background":"B2"}' \
   >> .captain/missions.jsonl
-bash "$GENERATE"
+bash "$GENERATE" || { echo "  FAIL: generate.sh exited non-zero"; FAIL=$((FAIL+1)); }
 FIRST=$(grep -n "^## Mission" MISSIONS.md | head -1)
 assert_contains MISSIONS.md "## Mission 1: First" "Mission 1 present"
 echo "$FIRST" | grep -q "Mission 1" && \
@@ -100,18 +101,22 @@ teardown
 # --- Test 5: completed missions sorted descending ---
 echo "Test 5: descending sort for completed"
 setup
-printf '%s\n' '{"id":1,"title":"First","goal":"G","background":"B","completed_at":"2026-01-01"}' \
+printf '%s\n' '{"id":1,"title":"First","goal":"G","background":"B","completed_at":"2026-03-01"}' \
   > .captain/completed.jsonl
-printf '%s\n' '{"id":3,"title":"Third","goal":"G","background":"B","completed_at":"2026-03-01"}' \
+printf '%s\n' '{"id":3,"title":"Third","goal":"G","background":"B","completed_at":"2026-02-01"}' \
   >> .captain/completed.jsonl
-printf '%s\n' '{"id":2,"title":"Second","goal":"G","background":"B","completed_at":"2026-02-01"}' \
+printf '%s\n' '{"id":2,"title":"Second","goal":"G","background":"B","completed_at":"2026-01-01"}' \
   >> .captain/completed.jsonl
-bash "$GENERATE"
+bash "$GENERATE" || { echo "  FAIL: generate.sh exited non-zero"; FAIL=$((FAIL+1)); }
 FIRST=$(grep -n "^## Mission" COMPLETED.md | head -1)
+LAST=$(grep -n "^## Mission" COMPLETED.md | tail -1)
 echo "$FIRST" | grep -q "Mission 3" && \
   { echo "  PASS: Mission 3 (highest id) is first"; PASS=$((PASS+1)); } || \
   { echo "  FAIL: Mission 3 is not first (got: $FIRST)"; FAIL=$((FAIL+1)); }
-assert_contains COMPLETED.md "\*\*Completed:\*\* 2026-03-01" "completed_at rendered"
+echo "$LAST" | grep -q "Mission 1" && \
+  { echo "  PASS: Mission 1 (lowest id) is last"; PASS=$((PASS+1)); } || \
+  { echo "  FAIL: Mission 1 is not last (got: $LAST)"; FAIL=$((FAIL+1)); }
+assert_contains COMPLETED.md "\*\*Completed:\*\* 2026-02-01" "completed_at rendered"
 teardown
 
 # --- Test 6: depends_on array joined with comma-space ---
@@ -119,7 +124,7 @@ echo "Test 6: depends_on join"
 setup
 printf '%s\n' '{"id":1,"title":"T","goal":"G","background":"B","depends_on":["Mission 2: A","Mission 3: B"]}' \
   > .captain/missions.jsonl
-bash "$GENERATE"
+bash "$GENERATE" || { echo "  FAIL: generate.sh exited non-zero"; FAIL=$((FAIL+1)); }
 assert_contains MISSIONS.md "Mission 2: A, Mission 3: B" "depends_on joined with comma-space"
 teardown
 
