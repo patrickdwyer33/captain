@@ -5,7 +5,7 @@
 
 ## Overview
 
-Replace inline markdown editing of `MISSIONS.md` with a JSONL-backed data layer. Missions are stored as structured records in `.captain/missions.jsonl` and `.captain/completed.jsonl`. A bash script shipped with the captain plugin generates `MISSIONS.md` and `COMPLETED.md` from these files. Skills update the JSONL files and invoke the script rather than editing markdown directly.
+Replace inline markdown editing of `MISSIONS.md` with a JSONL-backed data layer. Missions are stored as structured records in `.captain/missions.jsonl` and `.captain/completed.jsonl`. A Python 3 script shipped with the captain plugin generates `MISSIONS.md` and `COMPLETED.md` from these files. Skills update the JSONL files and invoke the script rather than editing markdown directly.
 
 ## Data Layer
 
@@ -36,22 +36,22 @@ Two JSONL files live in `.captain/` at the project root (hidden directory). Both
 
 ## Generate Script
 
-**Location in repo:** `scripts/generate.sh`
+**Location in repo:** `scripts/generate.py`
 
 **Stable invocation path (from project root):**
 ```bash
-bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+python3 ~/.claude/plugins/marketplaces/captain/scripts/generate.py
 ```
 
 **Behavior:**
 - Reads `.captain/missions.jsonl` → writes `MISSIONS.md`
 - Reads `.captain/completed.jsonl` → writes `COMPLETED.md`
 - Both output files are fully regenerated on every run — never hand-edited
-- Handles missing or empty JSONL files gracefully: `MISSIONS.md` contains `# Outstanding Missions` followed by a blank line and the See also line (no mission entries); `COMPLETED.md` contains only `# Completed Missions` with no entries and no trailing content. `COMPLETED.md` never has a See also line.
-- A `jq` parse error on a corrupted JSONL file causes the generate script to exit with a non-zero code and produce no output files for that run
+- Handles missing or empty JSONL files gracefully: `MISSIONS.md` contains `# Outstanding Missions` followed by a blank line and the See also line (no mission entries); `COMPLETED.md` contains only `# Completed Missions` with no entries. `COMPLETED.md` never has a See also line.
+- Each file is generated independently; a parse error on one JSONL file exits with a non-zero code and skips writing that file's output, but does not affect the other file
 - **Invariant:** after any skill mutation, the generate script is always run, so `MISSIONS.md` and `COMPLETED.md` are always current
 
-**`MISSIONS.md` output format** — outstanding missions in ascending id order (lowest first). Consecutive mission sections are separated by a blank line between the end of one section and the `## Mission N` heading of the next:
+**`MISSIONS.md` output format** — outstanding missions in ascending id order. Consecutive mission sections are separated by a blank line. The script unconditionally emits a blank line between sections regardless of whether a body field is present:
 ```markdown
 # Outstanding Missions
 
@@ -70,7 +70,7 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 [body rendered verbatim, JSON-unescaped, preceded by a blank line] (omitted if field absent)
 ```
 
-**`COMPLETED.md` output format** — completed missions in descending id order (highest id first). Sort key is `id`, not `completed_at` — this is intentional; id order is stable and predictable. No See also line. Consecutive sections separated by a blank line between the end of one section and the next `## Mission N` heading.
+**`COMPLETED.md` output format** — completed missions in descending id order. No See also line. Consecutive sections separated by a blank line (unconditional, same as MISSIONS.md):
 ```markdown
 # Completed Missions
 
@@ -89,7 +89,7 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 **Completed:** 2026-03-24
 ```
 
-When `body` is absent, `**Completed:**` follows the last present field with a single blank line separator. Example (no notes, no depends_on, no body):
+When `body` is absent, `**Completed:**` follows the last present field with a single blank line separator:
 ```markdown
 ## Mission 2: Fix login bug
 
@@ -100,26 +100,43 @@ When `body` is absent, `**Completed:**` follows the last present field with a si
 **Completed:** 2026-03-24
 ```
 
-The `body` field rendering rule applies to both `MISSIONS.md` and `COMPLETED.md`: all standard JSON string unescaping is applied (so `\n` → newline, `\t` → tab, `\\` → backslash, etc.), then the content is written verbatim, preceded by a blank line. Trailing newlines in the unescaped body are preserved as-is; the renderer does not strip them. The blank-line separator before the next section (or end of file) is produced naturally by the surrounding structure — not by the body's trailing content.
+The `body` field rendering rule applies to both files: all standard JSON string unescaping is applied, then the content is written verbatim, preceded by a blank line. Trailing newlines in the body are preserved as-is. The script always emits a blank line after each section; it does not rely on body trailing content for spacing.
 
 ## Skill Changes
 
+All JSON manipulation uses Python 3 (`python3`), which is available on all supported platforms. Skills read JSONL by parsing each non-blank line as a JSON object and write JSONL as newline-separated JSON objects (one per line, trailing newline after the last record, no blank lines between records).
+
 ### `captain:create-mission`
 
-1. If `.captain/`, `.captain/missions.jsonl`, or `.captain/completed.jsonl` don't exist, create them before proceeding (don't require user to run `init-project-docs` first). Creating both JSONL files ensures the id-calculation jq command always has valid inputs.
+1. If `.captain/`, `.captain/missions.jsonl`, or `.captain/completed.jsonl` don't exist, create them before proceeding. Also check that `.captain/` is not in `.gitignore` and add an exclusion if needed. Creating both JSONL files ensures the id-calculation always has valid inputs.
 2. Gather mission details interactively (same prompts as before)
-3. Determine next id: find the maximum `id` across both JSONL files and add 1. Both files are guaranteed to exist after step 1 (even if empty), so the command always has valid inputs. `jq -rs` slurps all valid JSON objects from both files into a single stream regardless of whether either file is empty, populated, or both — an empty file contributes zero objects, and `max` of the combined array with `// 0` handles the all-empty case:
-   ```bash
-   jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl
+3. Determine next id — find the max `id` across both JSONL files and add 1:
+   ```python
+   import json, os
+   max_id = 0
+   for path in ['.captain/missions.jsonl', '.captain/completed.jsonl']:
+       try:
+           for line in open(path):
+               line = line.strip()
+               if line:
+                   max_id = max(max_id, json.loads(line)['id'])
+       except FileNotFoundError:
+           pass
+   next_id = max_id + 1
    ```
-   Then add 1. Examples: two empty files → `0 + 1 = 1`; one file with max id 5, other empty → `5 + 1 = 6`.
-4. Build JSON record and append to `.captain/missions.jsonl` using `echo` (which always terminates with `\n`). Prepend a newline guard only when the file is non-empty and its last byte is not `\n` (protects against hand-edited files with stripped trailing newlines):
-   ```bash
-   [ -s .captain/missions.jsonl ] && tail -c1 .captain/missions.jsonl | grep -qv $'\n' && printf '\n' >> .captain/missions.jsonl
-   echo '{"id":N,...}' >> .captain/missions.jsonl
+4. Build the record dict and write it to `.captain/missions.jsonl` by reading all existing records, appending the new one, and rewriting the file:
+   ```python
+   import json
+   try:
+       records = [json.loads(l) for l in open('.captain/missions.jsonl') if l.strip()]
+   except FileNotFoundError:
+       records = []
+   records.append({"id": next_id, "title": ..., "goal": ..., "background": ..., ...})
+   with open('.captain/missions.jsonl', 'w') as f:
+       f.write('\n'.join(json.dumps(r, ensure_ascii=False) for r in records))
+       if records: f.write('\n')
    ```
-   Always use `echo` (not `printf '%s'`) to ensure the appended line always ends with `\n`. The same pattern applies when appending to `.captain/completed.jsonl`.
-5. Run generate script: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
+5. Run: `python3 ~/.claude/plugins/marketplaces/captain/scripts/generate.py`
 6. Confirm to user
 
 ### `captain:remove-mission` — branch selection
@@ -133,34 +150,60 @@ The skill begins by asking the user whether the mission was completed or cancell
 
 ### `captain:remove-mission` (complete)
 
-1. Validate that a record with the given id exists in `.captain/missions.jsonl`. If it does not exist, abort with an error message to the user.
-2. Build the completed record in a single `jq` call. `jq` without `-s` reads JSONL line-by-line (one object per invocation), so `select` filters to the matching record:
-   ```bash
-   TODAY=$(date +%Y-%m-%d)
-   RECORD=$(jq -c --argjson id N --arg d "$TODAY" 'select(.id == $id) | . + {completed_at: $d}' .captain/missions.jsonl)
-   ```
-   Abort if `$RECORD` is empty (`[ -z "$RECORD" ]`) — step 1 prevents this for valid ids, but a jq error on malformed JSONL can also produce empty output.
-3. Append `$RECORD` to `.captain/completed.jsonl` using `echo` (which terminates with `\n`), with preceding newline guard only if the file is non-empty and its last byte is not `\n`:
-   ```bash
-   [ -s .captain/completed.jsonl ] && tail -c1 .captain/completed.jsonl | grep -qv $'\n' && printf '\n' >> .captain/completed.jsonl
-   echo "$RECORD" >> .captain/completed.jsonl
-   ```
-4. Rewrite `.captain/missions.jsonl` without the completed record. The `.tmp` intermediate ensures the original file is not modified until the filtered output is fully written — if `mv` fails, the original is still intact:
-   ```bash
-   jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
-   ```
-5. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
-6. Confirm to user
+```python
+import json, datetime
+
+# Read missions
+records = [json.loads(l) for l in open('.captain/missions.jsonl') if l.strip()]
+
+# Validate
+target = next((r for r in records if r['id'] == N), None)
+if not target:
+    raise SystemExit(f"Mission {N} not found")
+
+# Build completed record
+completed_record = dict(target, completed_at=datetime.date.today().isoformat())
+
+# Append to completed.jsonl
+try:
+    done = [json.loads(l) for l in open('.captain/completed.jsonl') if l.strip()]
+except FileNotFoundError:
+    done = []
+done.append(completed_record)
+with open('.captain/completed.jsonl', 'w') as f:
+    f.write('\n'.join(json.dumps(r, ensure_ascii=False) for r in done))
+    if done: f.write('\n')
+
+# Remove from missions.jsonl
+remaining = [r for r in records if r['id'] != N]
+with open('.captain/missions.jsonl', 'w') as f:
+    f.write('\n'.join(json.dumps(r, ensure_ascii=False) for r in remaining))
+    if remaining: f.write('\n')
+```
+
+Then run: `python3 ~/.claude/plugins/marketplaces/captain/scripts/generate.py`
+
+Confirm to user.
 
 ### `captain:remove-mission` (delete/cancel)
 
-1. Validate that a record with the given id exists in `.captain/missions.jsonl`. If it does not exist, abort with an error message to the user.
-2. Rewrite `.captain/missions.jsonl` without the deleted record (`.tmp` intermediate preserves the original if `mv` fails):
-   ```bash
-   jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
-   ```
-3. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
-4. Confirm to user
+```python
+import json
+
+records = [json.loads(l) for l in open('.captain/missions.jsonl') if l.strip()]
+
+if not any(r['id'] == N for r in records):
+    raise SystemExit(f"Mission {N} not found")
+
+remaining = [r for r in records if r['id'] != N]
+with open('.captain/missions.jsonl', 'w') as f:
+    f.write('\n'.join(json.dumps(r, ensure_ascii=False) for r in remaining))
+    if remaining: f.write('\n')
+```
+
+Then run: `python3 ~/.claude/plugins/marketplaces/captain/scripts/generate.py`
+
+Confirm to user.
 
 ### `captain:remove-mission` skill frontmatter
 
@@ -170,7 +213,7 @@ Update the `description:` field in `skills/remove-mission/SKILL.md` to reflect t
 
 Run the generate script before reading `MISSIONS.md` to ensure it is current, including when `.captain/missions.jsonl` was hand-edited without invoking a skill:
 ```bash
-bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+python3 ~/.claude/plugins/marketplaces/captain/scripts/generate.py
 ```
 Then proceed as before.
 
@@ -185,7 +228,7 @@ Additional steps for `.captain/` setup:
 2. Create empty `.captain/missions.jsonl` if missing
 3. Create empty `.captain/completed.jsonl` if missing
 4. Ensure `.captain/` is NOT in `.gitignore` — these files are the source of truth and must be committed
-5. Run `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh` to produce initial `MISSIONS.md` and `COMPLETED.md`
+5. Run `python3 ~/.claude/plugins/marketplaces/captain/scripts/generate.py` to produce initial `MISSIONS.md` and `COMPLETED.md`
 
 ### `captain:new-project`
 
@@ -204,5 +247,5 @@ No change — calls `captain:init-project-docs`.
 
 - Migration of existing `MISSIONS.md` files to JSONL (users start fresh or migrate manually)
 - A dedicated migration script
-- Validation of JSONL record integrity beyond what `jq` provides (a `jq` parse error on a corrupted line will cause the skill to abort before any mutation — no silent data loss)
-- Any runtime other than bash + jq (both are available everywhere Claude Code runs)
+- Validation of JSONL record integrity beyond standard Python `json` parsing (a parse error will cause the skill to abort before any mutation — no silent data loss)
+- Any runtime other than bash + Python 3 (both are available on all platforms where Claude Code runs)
