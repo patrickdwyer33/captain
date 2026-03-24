@@ -47,7 +47,7 @@ bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
 - Reads `.captain/missions.jsonl` → writes `MISSIONS.md`
 - Reads `.captain/completed.jsonl` → writes `COMPLETED.md`
 - Both output files are fully regenerated on every run — never hand-edited
-- Handles missing or empty JSONL files gracefully (produces headers-only output)
+- Handles missing or empty JSONL files gracefully: `MISSIONS.md` contains `# Outstanding Missions` (plus the See also line) with no mission entries; `COMPLETED.md` contains only `# Completed Missions` with no entries
 - **Invariant:** after any skill mutation, the generate script is always run, so `MISSIONS.md` and `COMPLETED.md` are always current
 
 **`MISSIONS.md` output format** — outstanding missions in ascending id order (lowest first):
@@ -64,7 +64,7 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 
 **Notes:** ... (omitted if field absent)
 
-**Depends on:** Mission 3: ..., Mission 5: ... (omitted if field absent)
+**Depends on:** Mission 3: ..., Mission 5: ... (omitted if field absent; array joined with `", "` comma-space)
 
 [body rendered verbatim, JSON-unescaped, preceded by a blank line] (omitted if field absent)
 ```
@@ -103,9 +103,9 @@ The `body` field is emitted as raw markdown: JSON string unescaping is applied (
    jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl
    ```
    Then add 1. Result for two empty files: `0 + 1 = 1`.
-4. Build JSON record and append to `.captain/missions.jsonl`. Only prepend a newline guard if the file is non-empty (a leading blank line breaks JSONL parsers):
+4. Build JSON record and append to `.captain/missions.jsonl`. Since `echo` already terminates lines with `\n`, the guard only fires when the file is non-empty AND its last byte is not a newline (i.e., it was hand-edited and the trailing newline was stripped):
    ```bash
-   [ -s .captain/missions.jsonl ] && printf '\n' >> .captain/missions.jsonl
+   [ -s .captain/missions.jsonl ] && tail -c1 .captain/missions.jsonl | grep -qv $'\n' && printf '\n' >> .captain/missions.jsonl
    echo '{"id":N,...}' >> .captain/missions.jsonl
    ```
    The same newline guard pattern applies when appending to `.captain/completed.jsonl`.
@@ -124,8 +124,12 @@ The skill begins by asking the user whether the mission was completed or cancell
 ### `captain:remove-mission` (complete)
 
 1. Read the full record from `.captain/missions.jsonl` using `jq` (match by id)
-2. Add `completed_at` field with today's ISO date obtained via `$(date +%Y-%m-%d)` (all original fields preserved)
-3. Append the full updated record to `.captain/completed.jsonl` (with preceding newline guard — only if file is non-empty)
+2. Build the completed record by adding `completed_at` to all original fields:
+   ```bash
+   TODAY=$(date +%Y-%m-%d)
+   RECORD=$(jq -c "select(.id == N)" .captain/missions.jsonl | jq -c --arg d "$TODAY" '. + {completed_at: $d}')
+   ```
+3. Append `$RECORD` to `.captain/completed.jsonl` (with preceding newline guard — only if file is non-empty and last byte is not `\n`)
 4. Rewrite `.captain/missions.jsonl` without the completed record:
    ```bash
    jq -c '. | select(.id != N)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
@@ -135,7 +139,10 @@ The skill begins by asking the user whether the mission was completed or cancell
 
 ### `captain:remove-mission` (delete/cancel)
 
-1. Rewrite `.captain/missions.jsonl` without the deleted record (same jq pattern as above)
+1. Rewrite `.captain/missions.jsonl` without the deleted record:
+   ```bash
+   jq -c 'select(.id != N)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
+   ```
 2. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 3. Confirm to user
 
@@ -145,7 +152,11 @@ Update the `description:` field in `skills/remove-mission/SKILL.md` to reflect t
 
 ### `captain:start-mission`
 
-No change — reads from `MISSIONS.md` as before. Because the generate script is always run after any mutation, `MISSIONS.md` is guaranteed to be current.
+Run the generate script before reading `MISSIONS.md` to ensure it is current, including when `.captain/missions.jsonl` was hand-edited without invoking a skill:
+```bash
+bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+```
+Then proceed as before.
 
 ### `captain:finish-mission`
 
