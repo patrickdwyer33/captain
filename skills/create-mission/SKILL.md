@@ -1,56 +1,77 @@
 ---
 name: create-mission
-description: Add a new mission to the project's MISSIONS.md. Use when the user wants to record a new mission, feature, or work item to track. Missions are stored as H2 sections in MISSIONS.md at the project root.
+description: Add a new mission to the project's JSONL mission store. Creates .captain/missions.jsonl if needed, calculates the next id, appends the new record, and regenerates MISSIONS.md.
 ---
 
 # Create Mission
 
-Add a new mission entry to `MISSIONS.md` at the root of the current project.
+Add a new mission to the JSONL data layer at `.captain/missions.jsonl` and regenerate `MISSIONS.md`.
 
 ## Steps
 
-1. **Locate MISSIONS.md** — find `MISSIONS.md` at the root of the current working project (the nearest ancestor directory containing a `CLAUDE.md`, `package.json`, `Cargo.toml`, or `.git`). If none exists, create it with a `# Outstanding Missions` header and a `# Completed Missions` section.
+1. **Check for jq** — run `command -v jq` to verify jq is installed. If missing, tell the user:
+   > jq is required by captain. Install it first:
+   > - macOS: `brew install jq`
+   > - Linux: `sudo apt install jq` or `sudo yum install jq`
+   Then abort.
 
-2. **Determine the next mission number** — count existing `## Mission N:` headings in `MISSIONS.md` and increment by 1.
+2. **Ensure `.captain/` exists** — if `.captain/`, `.captain/missions.jsonl`, or `.captain/completed.jsonl` are missing, create them:
+   ```bash
+   mkdir -p .captain
+   touch .captain/missions.jsonl
+   touch .captain/completed.jsonl
+   ```
+   Also check that `.captain/` is not listed in `.gitignore`. If it is, warn the user that the JSONL files must be committed and ask them to remove the exclusion.
 
-3. **Gather mission details** — if the user hasn't provided enough detail, ask:
-   - Mission name (becomes the heading title after the number)
-   - Goal (one sentence: what this accomplishes and why it matters)
-   - Background (context, motivation, what triggered this)
-   - Notes (constraints, dependencies, decisions already made — optional)
-   - Depends on (optional) — "Does this mission depend on any other missions completing first? If so, list them by full heading (e.g., `Mission 3: Add rate limiting`). Leave blank if none."
-   - Phases or sub-steps (optional — use if the mission has distinct stages)
+3. **Gather mission details** — ask the user for:
+   - **Title** — imperative present-tense name (e.g. "Add OAuth login")
+   - **Goal** — one sentence: what this accomplishes and why it matters
+   - **Background** — context, motivation, what triggered this
+   - **Notes** — constraints, decisions already made (optional — skip if nothing to say)
+   - **Depends on** — "Does this depend on other missions completing first? If so, list them as `Mission N: Title`. Leave blank if none." (optional)
+   - **Body** — phases or sub-steps (optional — use if the mission has distinct stages or a task list)
 
-4. **Write the entry** — insert into the `# Outstanding Missions` section of `MISSIONS.md` (before the `# Completed Missions` section) at the end of the active missions list, using this format:
+4. **Determine the next id** — find the max `id` across both JSONL files and add 1. Abort if jq exits non-zero (corrupt file):
+   ```bash
+   MAX=$(jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl) \
+     || { echo "Failed to read JSONL — check for corruption"; exit 1; }
+   NEXT_ID=$((MAX + 1))
+   ```
 
-```markdown
-## Mission 3: Mission Name
+5. **Build the JSON record** — start with required fields, then conditionally add optional ones:
+   ```bash
+   NEW_RECORD=$(jq -cn \
+     --argjson id "$NEXT_ID" \
+     --arg title "TITLE" \
+     --arg goal "GOAL" \
+     --arg background "BACKGROUND" \
+     '{id: $id, title: $title, goal: $goal, background: $background}')
 
-**Goal:** One sentence describing what this accomplishes and why it matters.
+   # Add optional string fields only if provided:
+   [ -n "$NOTES" ] && NEW_RECORD=$(printf '%s\n' "$NEW_RECORD" | jq -c --arg v "$NOTES" '. + {notes: $v}')
+   [ -n "$BODY"  ] && NEW_RECORD=$(printf '%s\n' "$NEW_RECORD" | jq -c --arg v "$BODY"  '. + {body: $v}')
 
-**Background:** Context, motivation, history. What triggered this mission?
+   # Add depends_on if provided (as a JSON array, e.g. '["Mission 3: Add rate limiting"]'):
+   [ -n "$DEPENDS_ON" ] && NEW_RECORD=$(printf '%s\n' "$NEW_RECORD" | jq -c --argjson v "$DEPENDS_ON" '. + {depends_on: $v}')
+   ```
+   For the `body` field: if the user supplied multi-line content, JSON-escape newlines as `\n` when building the string (jq `--arg` handles this automatically).
 
-**Notes:** Constraints, decisions already made. (Optional — omit if nothing to say.)
+6. **Write the record** — append using the read-pipe-write pattern:
+   ```bash
+   { cat .captain/missions.jsonl 2>/dev/null; printf '%s\n' "$NEW_RECORD"; } \
+     | jq -c '.' > .captain/missions.jsonl.tmp \
+     && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
+   ```
 
-**Depends on:** Mission 3: Name, Mission 5: Other Name (Optional — omit if no dependencies.)
+7. **Regenerate markdown** — run:
+   ```bash
+   bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+   ```
 
-**Phase 1 — First stage name**
-- Sub-item one
-- Sub-item two
-
-**Phase 2 — Second stage name**
-- Sub-item one
-- Sub-item two
-```
-
-   - **Goal** and **Background** are required. **Notes** and **Depends on** are optional — omit entirely if nothing to say.
-   - Omit phases if the mission is simple — use a flat bullet list after Background/Notes instead.
-
-5. **Confirm** — tell the user the mission was added and show the new entry.
+8. **Confirm** — tell the user the mission was added and show the new entry from `MISSIONS.md`.
 
 ## Notes
 
-- Never overwrite existing missions.
-- Never reuse or reorder mission numbers — numbers are permanent identifiers, not rankings.
-- Insert new missions at the end of the `# Outstanding Missions` section, just before the `# Completed Missions` section. Outstanding missions are ordered ascending (lowest number first, highest last).
-- Use present-tense imperative phrasing for mission names (e.g. "Add rate limiting", not "Rate limiting added").
+- Never reuse mission ids — ids are permanent identifiers.
+- The `body` field stores raw markdown with JSON-escaped newlines. When the user provides multi-line content, pass it to jq via `--arg` (which auto-escapes) rather than embedding raw newlines in the JSON string.
+- Optional fields are omitted from the record entirely when not provided — do not store empty strings.
