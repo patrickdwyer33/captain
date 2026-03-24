@@ -11,6 +11,10 @@ claude plugin marketplace add obra/superpowers-marketplace
 claude plugin install superpowers
 ```
 
+`jq` must also be installed:
+- macOS: `brew install jq`
+- Linux: `sudo apt install jq` or `sudo yum install jq`
+
 ## Installation
 
 ```
@@ -32,8 +36,8 @@ After enabling, captain will update on every session start. If you update but st
 
 | Skill | Description |
 |---|---|
-| `captain:create-mission` | Add a new mission to `MISSIONS.md` |
-| `captain:remove-mission` | Move a completed mission to the Completed Missions section, or delete a cancelled mission |
+| `captain:create-mission` | Add a new mission to the JSONL store; regenerates `MISSIONS.md` |
+| `captain:remove-mission` | Complete or delete a mission in the JSONL store; regenerates `MISSIONS.md` and `COMPLETED.md` |
 | `captain:start-mission` | Begin implementing a mission; invokes `superpowers:brainstorming` |
 | `captain:finish-mission` | Post-implementation cleanup: update docs, move mission to Completed, clean gaps |
 | `captain:save-code-gap` | Record a stub or unimplemented function in `GAPS.md` |
