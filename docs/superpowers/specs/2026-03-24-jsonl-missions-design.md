@@ -69,7 +69,7 @@ bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
 - Reads `.captain/missions.jsonl` → writes `MISSIONS.md`
 - Reads `.captain/completed.jsonl` → writes `COMPLETED.md`
 - Both files are generated independently — a parse error on one does not prevent the other from being written
-- Missing or empty JSONL files produce headers-only output (see format below)
+- Missing or empty JSONL files produce headers-only output (see format below). `COMPLETED.md` never has a See also line — in any case, empty or populated.
 - Both output files are fully regenerated on every run — never hand-edited
 - **Invariant:** after any skill mutation, the generate script is always run
 
@@ -186,11 +186,12 @@ The skill begins by asking the user whether the mission was completed or cancell
 ### `captain:remove-mission` (complete)
 
 1. Check for `jq`. If missing, show install instructions and abort.
-2. Validate the mission exists; abort with an error if not. `jq -e` with `select` exits 0 even when nothing matches, so use a length check instead:
+2. Validate the mission exists; abort with an error if not. The exit-code behavior of `jq -e select` when producing no output varies across jq versions, so use an explicit length check instead:
    ```bash
    FOUND=$(jq -rs --argjson id N '[.[] | select(.id == $id)] | length' .captain/missions.jsonl)
    [ "$FOUND" -eq 0 ] && echo "Mission N not found" && exit 1
    ```
+   **Note:** In all code blocks, `N` is a placeholder for the actual integer mission id (e.g., `--argjson id 3`).
 3. Build the completed record:
    ```bash
    TODAY=$(date +%Y-%m-%d)
