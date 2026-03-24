@@ -47,7 +47,7 @@ bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
 - Reads `.captain/missions.jsonl` → writes `MISSIONS.md`
 - Reads `.captain/completed.jsonl` → writes `COMPLETED.md`
 - Both output files are fully regenerated on every run — never hand-edited
-- Handles missing or empty JSONL files gracefully: `MISSIONS.md` contains `# Outstanding Missions` (plus the See also line) with no mission entries; `COMPLETED.md` contains only `# Completed Missions` with no entries
+- Handles missing or empty JSONL files gracefully: `MISSIONS.md` contains `# Outstanding Missions` followed by a blank line and the See also line, with no mission entries; `COMPLETED.md` contains only `# Completed Missions` with no entries and no trailing content
 - **Invariant:** after any skill mutation, the generate script is always run, so `MISSIONS.md` and `COMPLETED.md` are always current
 
 **`MISSIONS.md` output format** — outstanding missions in ascending id order (lowest first):
@@ -86,11 +86,20 @@ See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEA
 [body rendered verbatim, JSON-unescaped, preceded by a blank line] (omitted if field absent)
 
 **Completed:** 2026-03-24
-
-(If `body` is absent, `**Completed:**` follows immediately after the last present field, separated by a blank line.)
 ```
 
-The `body` field is emitted as raw markdown: JSON string unescaping is applied (so `\n` becomes a real newline), then the content is written verbatim, preceded by a blank line. If the unescaped body already ends with a newline, no additional newline is appended — the blank line separator before the next field (or end of section) is still exactly one blank line.
+When `body` is absent, `**Completed:**` follows the last present field with a single blank line separator. Example (no notes, no depends_on, no body):
+```markdown
+## Mission 2: Fix login bug
+
+**Goal:** ...
+
+**Background:** ...
+
+**Completed:** 2026-03-24
+```
+
+The `body` field rendering rule applies to both `MISSIONS.md` and `COMPLETED.md`: JSON string unescaping is applied (so `\n` becomes a real newline), then the content is written verbatim, preceded by a blank line. If the unescaped body already ends with a newline, no additional newline is appended — the blank line separator before the next field (or end of section) is still exactly one blank line.
 
 ## Skill Changes
 
@@ -98,17 +107,17 @@ The `body` field is emitted as raw markdown: JSON string unescaping is applied (
 
 1. If `.captain/`, `.captain/missions.jsonl`, or `.captain/completed.jsonl` don't exist, create them before proceeding (don't require user to run `init-project-docs` first). Creating both JSONL files ensures the id-calculation jq command always has valid inputs.
 2. Gather mission details interactively (same prompts as before)
-3. Determine next id: find the maximum `id` across both JSONL files and add 1. Both files are guaranteed to exist after step 1 (even if empty), so the command always has valid inputs. On an empty file, `jq` produces `null` from `max`, and `// 0` yields 0:
+3. Determine next id: find the maximum `id` across both JSONL files and add 1. Both files are guaranteed to exist after step 1 (even if empty), so the command always has valid inputs. `jq -rs` slurps all valid JSON objects from both files into a single stream regardless of whether either file is empty, populated, or both — an empty file contributes zero objects, and `max` of the combined array with `// 0` handles the all-empty case:
    ```bash
    jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl
    ```
-   Then add 1. Result for two empty files: `0 + 1 = 1`.
-4. Build JSON record and append to `.captain/missions.jsonl`. Since `echo` already terminates lines with `\n`, the guard only fires when the file is non-empty AND its last byte is not a newline (i.e., it was hand-edited and the trailing newline was stripped):
+   Then add 1. Examples: two empty files → `0 + 1 = 1`; one file with max id 5, other empty → `5 + 1 = 6`.
+4. Build JSON record and append to `.captain/missions.jsonl` using `echo` (which always terminates with `\n`). Prepend a newline guard only when the file is non-empty and its last byte is not `\n` (protects against hand-edited files with stripped trailing newlines):
    ```bash
    [ -s .captain/missions.jsonl ] && tail -c1 .captain/missions.jsonl | grep -qv $'\n' && printf '\n' >> .captain/missions.jsonl
    echo '{"id":N,...}' >> .captain/missions.jsonl
    ```
-   The same newline guard pattern applies when appending to `.captain/completed.jsonl`.
+   Always use `echo` (not `printf '%s'`) to ensure the appended line always ends with `\n`. The same pattern applies when appending to `.captain/completed.jsonl`.
 5. Run generate script: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 6. Confirm to user
 
@@ -123,28 +132,34 @@ The skill begins by asking the user whether the mission was completed or cancell
 
 ### `captain:remove-mission` (complete)
 
-1. Read the full record from `.captain/missions.jsonl` using `jq` (match by id)
-2. Build the completed record by adding `completed_at` to all original fields:
+1. Validate that a record with the given id exists in `.captain/missions.jsonl`. If it does not exist, abort with an error message to the user.
+2. Build the completed record in a single `jq` call:
    ```bash
    TODAY=$(date +%Y-%m-%d)
-   RECORD=$(jq -c "select(.id == N)" .captain/missions.jsonl | jq -c --arg d "$TODAY" '. + {completed_at: $d}')
+   RECORD=$(jq -c --argjson id N --arg d "$TODAY" 'select(.id == $id) | . + {completed_at: $d}' .captain/missions.jsonl)
    ```
-3. Append `$RECORD` to `.captain/completed.jsonl` (with preceding newline guard — only if file is non-empty and last byte is not `\n`)
+   This produces exactly one record. If `$RECORD` is empty (validation in step 1 prevents this), abort before writing.
+3. Append `$RECORD` to `.captain/completed.jsonl` using `echo` (which terminates with `\n`), with preceding newline guard only if the file is non-empty and its last byte is not `\n`:
+   ```bash
+   [ -s .captain/completed.jsonl ] && tail -c1 .captain/completed.jsonl | grep -qv $'\n' && printf '\n' >> .captain/completed.jsonl
+   echo "$RECORD" >> .captain/completed.jsonl
+   ```
 4. Rewrite `.captain/missions.jsonl` without the completed record:
    ```bash
-   jq -c '. | select(.id != N)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
+   jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
    ```
 5. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
 6. Confirm to user
 
 ### `captain:remove-mission` (delete/cancel)
 
-1. Rewrite `.captain/missions.jsonl` without the deleted record:
+1. Validate that a record with the given id exists in `.captain/missions.jsonl`. If it does not exist, abort with an error message to the user.
+2. Rewrite `.captain/missions.jsonl` without the deleted record:
    ```bash
-   jq -c 'select(.id != N)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
+   jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl > .captain/missions.jsonl.tmp && mv .captain/missions.jsonl.tmp .captain/missions.jsonl
    ```
-2. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
-3. Confirm to user
+3. Run: `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh`
+4. Confirm to user
 
 ### `captain:remove-mission` skill frontmatter
 
