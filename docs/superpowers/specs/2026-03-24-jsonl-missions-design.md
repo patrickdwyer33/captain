@@ -131,7 +131,7 @@ When `body` is absent, `**Completed:**` follows the last present field with a si
 **Completed:** 2026-03-24
 ```
 
-Empty file output:
+Empty file output (no trailing blank line after the heading):
 ```markdown
 # Completed Missions
 ```
@@ -147,9 +147,10 @@ All skills must check for `jq` at the start and show install instructions if mis
 1. Check for `jq`. If missing, show install instructions and abort.
 2. If `.captain/`, `.captain/missions.jsonl`, or `.captain/completed.jsonl` don't exist, create them. (Both JSONL files must exist for id calculation to work correctly.)
 3. Gather mission details interactively (same prompts as before)
-4. Determine next id — max across both files + 1:
+4. Determine next id — max across both files + 1. Check the exit code: a non-zero exit means a file is corrupted; abort before any mutation:
    ```bash
-   MAX=$(jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl)
+   MAX=$(jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl) \
+     || { echo "Failed to read JSONL files — check for corruption"; exit 1; }
    NEXT_ID=$((MAX + 1))
    ```
    Both files exist from step 2, so `jq -rs` always has valid inputs. An empty file contributes zero objects; `max // 0` handles the all-empty case.
@@ -192,13 +193,13 @@ The skill begins by asking the user whether the mission was completed or cancell
    [ "$FOUND" -eq 0 ] && echo "Mission N not found" && exit 1
    ```
    **Note:** In all code blocks, `N` is a placeholder for the actual integer mission id (e.g., `--argjson id 3`).
-3. Build the completed record:
+3. Build the completed record. Since ids are unique (never reused per the field reference), `select` produces exactly one line — `$RECORD` is always a single JSON object:
    ```bash
    TODAY=$(date +%Y-%m-%d)
    RECORD=$(jq -c --argjson id N --arg d "$TODAY" \
      'select(.id == $id) | . + {completed_at: $d}' .captain/missions.jsonl)
    ```
-4. **Remove from `.captain/missions.jsonl` first** (before writing to completed.jsonl). Doing the destructive operation first means that if the append in step 5 fails, the mission is not in either file — the user can recover by re-running with the known id rather than finding a duplicate across files:
+4. **Remove from `.captain/missions.jsonl` first** (before writing to completed.jsonl). If step 5 later fails, the mission is absent from both files rather than duplicated across them. Recovery requires manually re-adding to `.captain/completed.jsonl` using the original id (not auto-increment via `create-mission`):
    ```bash
    jq -c --argjson id N 'select(.id != $id)' .captain/missions.jsonl \
      > .captain/missions.jsonl.tmp \
@@ -240,7 +241,7 @@ Then proceed as before.
 
 ### `captain:finish-mission`
 
-No change — calls `captain:remove-mission`, which handles the JSONL update and script invocation.
+Calls the **complete path** of `captain:remove-mission` directly — skip the branch-selection prompt since finishing a mission implies completion. Then invoke the generate script and confirm to the user.
 
 ### `captain:init-project-docs`
 
