@@ -59,6 +59,7 @@ render_mission() {
 (
   set -e
   {
+    printf '<!-- This file is auto-generated from .captain/missions.jsonl — do not edit directly. To make changes, edit the JSONL files or ask Claude. -->\n\n'
     printf '# Outstanding Missions\n\n'
     printf 'See also: [GAPS.md](GAPS.md) — known code stubs to implement | [IDEAS.md](IDEAS.md) — long-term ideas\n'
 
@@ -78,6 +79,7 @@ render_mission() {
 (
   set -e
   {
+    printf '<!-- This file is auto-generated from .captain/completed.jsonl — do not edit directly. To make changes, edit the JSONL files or ask Claude. -->\n\n'
     printf '# Completed Missions\n'
 
     if [ -f "$COMPLETED_JSONL" ] && [ -s "$COMPLETED_JSONL" ]; then
