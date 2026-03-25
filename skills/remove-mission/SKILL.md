@@ -1,6 +1,6 @@
 ---
 name: remove-mission
-description: Remove a mission from the JSONL mission store. Moves completed missions to .captain/completed.jsonl and regenerates both MISSIONS.md and COMPLETED.md. Permanently deletes cancelled missions.
+description: Use when a mission is finished (move to Completed) or cancelled (delete it).
 ---
 
 # Remove Mission

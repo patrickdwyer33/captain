@@ -1,6 +1,6 @@
 ---
 name: start-mission
-description: Use when the user wants to begin working on a mission from the project's MISSIONS.md. Reads the mission spec and kicks off brainstorming and implementation.
+description: Use when the user wants to begin working on a mission from the project's MISSIONS.md.
 ---
 
 # Start Mission

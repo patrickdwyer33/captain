@@ -1,6 +1,6 @@
 ---
 name: finish-mission
-description: Use when implementation of a mission is complete and committed, to handle all documentation updates and cleanup. Invoked as the final step of start-mission.
+description: Use when a mission's implementation is complete and committed, to update docs and mark it done.
 ---
 
 # Finish Mission

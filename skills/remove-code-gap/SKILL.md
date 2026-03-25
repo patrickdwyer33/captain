@@ -1,6 +1,6 @@
 ---
 name: remove-code-gap
-description: Remove a resolved code gap from GAPS.md at the project root. Use when a previously stubbed or unimplemented function has been fully implemented.
+description: Use when a previously stubbed or unimplemented function has been fully implemented and its GAPS.md entry should be removed.
 ---
 
 # Remove Code Gap

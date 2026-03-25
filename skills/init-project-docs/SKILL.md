@@ -1,6 +1,6 @@
 ---
 name: init-project-docs
-description: Initialize standard project docs (MISSIONS.md, TODO.md, GAPS.md, IDEAS.md, README.md, CLAUDE.md, docs/notes/) at the project root if they don't exist, and verify existing files conform to the expected structure. Use when starting work on a project or when these files may be missing.
+description: Use when starting a new project or when standard project docs (MISSIONS.md, GAPS.md, IDEAS.md, CLAUDE.md, etc.) may be missing or structurally invalid.
 ---
 
 # Init Project Docs

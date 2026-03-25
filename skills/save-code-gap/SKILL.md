@@ -38,10 +38,6 @@ A code gap is a function, route, or module that:
 
 4. **Confirm** — tell the user the gap was saved.
 
-## Removing a gap
-
-When a gap is implemented, delete its bullet line from `GAPS.md`. If removing the last gap, leave the `# Code Gaps` header and an empty file body (or a note that all gaps are resolved).
-
 ## Notes
 
 - One bullet per gap — don't combine multiple gaps into one entry.

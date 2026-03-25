@@ -1,6 +1,6 @@
 ---
 name: create-mission
-description: Add a new mission to the project's JSONL mission store. Creates .captain/missions.jsonl if needed, calculates the next id, appends the new record, and regenerates MISSIONS.md.
+description: Use when the user wants to add a new mission to the project backlog.
 ---
 
 # Create Mission
@@ -38,7 +38,7 @@ Add a new mission to the JSONL data layer at `.captain/missions.jsonl` and regen
    NEXT_ID=$((MAX + 1))
    ```
 
-5. **Build the JSON record** — start with required fields, then conditionally add optional ones:
+5. **Build the JSON record** — substitute the values collected in step 3 for TITLE, GOAL, BACKGROUND:
    ```bash
    NEW_RECORD=$(jq -cn \
      --argjson id "$NEXT_ID" \

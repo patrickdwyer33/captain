@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Scaffold a new project in ~/dev with a git repo, private GitHub remote, and standard project docs. Use when starting a brand new project from scratch.
+description: Use when starting a brand new project from scratch in ~/dev.
 ---
 
 # New Project
