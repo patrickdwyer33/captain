@@ -9,19 +9,27 @@ Complete all post-implementation steps after a mission is done: update every rel
 
 ## Steps
 
-1. **Update all project documentation** — look at what changed (git diff for the mission, or ask the user which mission was completed). Update every file that references the changed area:
+1. **Discover what documentation exists and what changed** — before updating anything, build a complete picture:
+   - Run `git diff` (or `git log --name-only`) for the mission to see what files changed
+   - List all documentation in the project: `README.md`, `docs/`, `CLAUDE.md`, deployment files, etc.
+   - For each doc file found, assess whether it references or describes any changed area
+   - Make a list of every doc that needs updating — don't start writing yet
+
+2. **Update all relevant documentation** — work through your list from step 1. Common candidates:
    - `README.md` — if the feature is user-visible or changes setup/usage
    - `CLAUDE.md` — if the implementation affects how Claude should work in this project
-   - Deployment docs (`docs/`, `deployment.md`, `setup.sh`, etc.) — if deployment steps changed
-   - Any other `.md` files that describe or reference the changed area
+   - Everything in `docs/` — API docs, architecture docs, guides, deployment docs, runbooks, etc.
+   - `deployment.md`, `setup.sh`, `INSTALL.md`, or similar — if deployment/setup steps changed
+   - Any other `.md` or doc files that describe or reference the changed area
    - Run doc generation scripts if present (e.g. `cargo doc`, `typedoc`)
 
-2. **Clean up tracking files** — use the mission management skills:
+3. **Clean up tracking files** — use the mission management skills:
    - `captain:remove-mission` — invoke the **complete path** directly (this is always a completion, not a deletion — skip the "done or cancelling?" prompt and proceed straight to the Complete path steps)
    - `captain:remove-code-gap` — remove any gaps from `GAPS.md` resolved by this mission
    - `captain:save-code-gap` — record any new gaps discovered during implementation
 
 ## Notes
 
-- Don't assume which docs need updating — look at what actually changed and be comprehensive. Check git diff rather than relying on what was mentioned during implementation.
+- **Discovery before editing** — always complete step 1 fully before writing any doc updates. The most common failure mode is updating only `CLAUDE.md` and missing `README.md`, `docs/`, deployment guides, and other project-specific docs.
+- Check git diff rather than relying on what was mentioned during implementation — the diff is the source of truth.
 - If a doc file doesn't exist, skip it rather than creating it (unless it's clearly needed).
