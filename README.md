@@ -18,7 +18,7 @@ claude plugin install superpowers
 ## Installation
 
 ```
-claude plugin marketplace add patrickdwyer33/captain
+claude plugin marketplace add patrickdwyer33/pattymarket
 claude plugin install captain
 ```
 
@@ -27,7 +27,7 @@ claude plugin install captain
 Claude Code does not auto-update third-party plugins by default. To keep captain current, enable auto-updates after installing:
 
 1. Run `/plugin` in Claude Code
-2. Go to **Marketplaces** → **captain**
+2. Go to **Marketplaces** → **pattymarket**
 3. Enable **Auto-update**
 
 After enabling, captain will update on every session start. If you update but still see old skills, delete `~/.claude/plugins/cache/captain/` and restart.
