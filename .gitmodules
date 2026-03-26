@@ -1,0 +1,3 @@
+[submodule "marketplace"]
+	path = marketplace
+	url = https://github.com/patrickdwyer33/pattymarket.git
