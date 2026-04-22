@@ -26,7 +26,7 @@ Ensure all standard project documentation files and directories exist at the pro
    - If it exists, leave it alone.
 
 3. **CLAUDE.md** — check if it exists.
-   - If missing, create it with a `# <project-name> — Claude Code Context` header and the following blurb followed by placeholder sections:
+   - If missing, create it with a `# <project-name> — Claude Code Context` header and the following content:
      ```markdown
      ## Project Docs
 
@@ -37,13 +37,29 @@ Ensure all standard project documentation files and directories exist at the pro
      | [GAPS.md](GAPS.md) | Known code stubs, unimplemented functions, and placeholder values |
      | [IDEAS.md](IDEAS.md) | Long-term ideas and future directions, no commitment implied |
 
+     ## Documentation Standards
+
+     All written content in this project — docs, mission fields, gap descriptions, code comments — must follow two directives.
+
+     **Stateless:** Every doc must be readable by someone who was not in the conversation that produced it.
+     - No session-relative labels ("NEW:", "UPDATED:", "CHANGED:")
+     - No conversational back-references ("as discussed", "not like this [X]", "per our conversation")
+     - Clarifications state the reason, not the trigger ("Use X because Y" — not "we clarified X")
+     - No first-person session voice ("I added", "we decided")
+     - No implicit temporal anchors ("recently added", "just implemented")
+
+     **Remove stale concepts and misunderstandings:** Docs reflect current understanding only.
+     - If a misunderstanding was clarified, state only the correct thing — no trace of the wrong path
+     - If a concept was renamed or abandoned, remove all references to the old concept
+     - Describe only the current state, not how the work evolved
+
      ## Overview
 
      ## Commands
 
      ## Key Patterns
      ```
-   - If it exists, leave it alone.
+   - If it exists, check whether it contains a `## Documentation Standards` section. If the section is missing, append the Documentation Standards block (shown in the "if missing" template above) to the end of the file.
 
 4. **docs/ and docs/notes/** — check if the directories exist.
    - Create `docs/` if missing.
