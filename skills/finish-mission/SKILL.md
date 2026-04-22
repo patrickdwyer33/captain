@@ -23,9 +23,9 @@ Complete all post-implementation steps after a mission is done: update every rel
    - Any other `.md` or doc files that describe or reference the changed area
    - Run doc generation scripts if present (e.g. `cargo doc`, `typedoc`)
 
-3. **Review all written content against the writing standard** — re-read every doc written or updated in step 2 and check each against both directives from `skills/writing-standard/RULES.md`:
+3. **Review all written content against the writing standard** — run `git diff` to confirm which docs were actually modified, then re-read each one and check against both directives from `skills/writing-standard/RULES.md`:
    - **Stateless:** no session-relative labels ("NEW:", "UPDATED:"), no back-references ("as discussed", "not like this [X]"), no first-person session voice, no temporal anchors ("recently added")
-   - **Clean:** no stale concepts, no documented misunderstandings — state only what is currently correct
+   - **No stale concepts:** no documented misunderstandings, no references to renamed or abandoned concepts — state only what is currently correct
 
    Fix any violations before proceeding. Do not advance to step 4 until all written content passes.
 
