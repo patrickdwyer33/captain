@@ -25,7 +25,7 @@ A code gap is a function, route, or module that:
    - A brief description of what's missing
    - How it should be implemented (the API, approach, or reference to use)
 
-3. **Write the entry** — apply the captain writing standard (`skills/writing-standard/RULES.md`): describe what is unimplemented and why, not the session that discovered it. No "as discussed", no session context, no stale concepts. Append to the bullet list in `GAPS.md` using this format:
+3. **Write the entry** — apply the captain writing standard (`skills/writing-standard/RULES.md`): describe what is unimplemented and how it should be implemented, not the session that discovered it. No "as discussed", no session context, no stale concepts. Append to the bullet list in `GAPS.md` using this format:
 
 ```markdown
 - `identifier` (location): short description of what's missing — implementation hint (e.g. which API to call, what approach to use)
