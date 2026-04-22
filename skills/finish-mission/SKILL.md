@@ -15,7 +15,7 @@ Complete all post-implementation steps after a mission is done: update every rel
    - For each doc file found, assess whether it references or describes any changed area
    - Make a list of every doc that needs updating — don't start writing yet
 
-2. **Update all relevant documentation** — before writing anything, apply the captain writing standard (`skills/writing-standard/RULES.md`): all content must be stateless (no session labels, back-references, first-person voice, or temporal anchors) and free of stale concepts. Work through your list from step 1. Common candidates:
+2. **Update all relevant documentation** — before writing anything, apply the captain writing standard (`skills/writing-standard/RULES.md`): all content must be stateless (no session labels, back-references, first-person voice, temporal anchors, or documented misunderstandings) and free of stale concepts. Work through your list from step 1. Common candidates:
    - `README.md` — if the feature is user-visible or changes setup/usage
    - `CLAUDE.md` — if the implementation affects how Claude should work in this project
    - Everything in `docs/` — API docs, architecture docs, guides, deployment docs, runbooks, etc.
