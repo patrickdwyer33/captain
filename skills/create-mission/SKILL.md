@@ -31,6 +31,8 @@ Add a new mission to the JSONL data layer at `.captain/missions.jsonl` and regen
    - **Depends on** — "Does this depend on other missions completing first? If so, list them as `Mission N: Title`. Leave blank if none." (optional)
    - **Body** — phases or sub-steps (optional — use if the mission has distinct stages or a task list)
 
+   > **Writing standard:** Apply `skills/writing-standard/RULES.md` when writing these fields. `goal`, `background`, `notes`, and `body` must be stateless (no "as discussed", no session labels, no first-person voice) and reflect current understanding only — no stale concepts or documented misunderstandings.
+
 4. **Determine the next id** — find the max `id` across both JSONL files and add 1. Abort if jq exits non-zero (corrupt file):
    ```bash
    MAX=$(jq -rs '[.[] | .id] | max // 0' .captain/missions.jsonl .captain/completed.jsonl) \
