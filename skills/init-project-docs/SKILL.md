@@ -51,7 +51,7 @@ Ensure all standard project documentation files and directories exist at the pro
      **Remove stale concepts and misunderstandings:** Docs reflect current understanding only.
      - If a misunderstanding was clarified, state only the correct thing — no trace of the wrong path
      - If a concept was renamed or abandoned, remove all references to the old concept
-     - Describe only the current state, not how the work evolved
+     - Describe only the current state, not how the work evolved — a reader should not be able to infer what was tried, discarded, or corrected
 
      ## Overview
 
