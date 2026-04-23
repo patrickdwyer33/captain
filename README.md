@@ -11,6 +11,13 @@ claude plugin marketplace add obra/superpowers-marketplace
 claude plugin install superpowers
 ```
 
+The `compound-engineering-plugin` must also be installed. Captain's `finish-mission` skill invokes its `ce-compound` skill to capture reusable lessons to `docs/solutions/`.
+
+```
+/plugin marketplace add EveryInc/compound-engineering-plugin
+/plugin install compound-engineering
+```
+
 `jq` must also be installed:
 - macOS: `brew install jq`
 - Linux: `sudo apt install jq` or `sudo yum install jq`
@@ -51,6 +58,7 @@ Claude Code has no native plugin dependency mechanism. Signal that a project req
 
     ## Required Plugins
     - superpowers — https://github.com/obra/superpowers
+    - compound-engineering — https://github.com/EveryInc/compound-engineering-plugin
     - captain — https://github.com/patrickdwyer33/captain
 
 Team members who open the project in Claude Code will see this requirement in their context.
