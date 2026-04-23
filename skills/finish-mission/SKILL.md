@@ -32,7 +32,7 @@ Complete all post-implementation steps after a mission is done: update every rel
    - **Pattern/convention** — a design decision or code convention worth future adherence
    - **Gotcha** — a non-obvious constraint, workaround, or environment quirk discovered during the work
 
-   **Skip lesson identification entirely** if the mission was clearly mechanical — renames, version bumps, dependency updates, boilerplate. When in doubt, propose the candidate; the user can decline. State the skip reason plainly and proceed to step 4.
+   **Skip lesson identification entirely** if the mission was clearly mechanical — renames, version bumps, dependency updates, boilerplate. In that case, state the skip reason plainly and proceed to step 4. When in doubt about whether something is mechanical, propose the candidate; the user can decline.
 
    **Propose candidates to the user in batch form. Present this prompt to the user verbatim (adjusting only the count and lesson entries):**
    > Found N candidate lessons:
