@@ -28,7 +28,7 @@ Ensure all standard project documentation files and directories exist at the pro
      ```markdown
      | [docs/solutions/](docs/solutions/) | Compounding knowledge — bug postmortems, patterns, and gotchas captured by ce-compound |
      ```
-     If the Project Docs table itself is missing from the file, warn the user rather than adding one — do not auto-insert the whole table.
+     If the Project Docs table itself is missing from the file, warn the user rather than adding one — ask first; do not auto-insert the whole table.
 
 3. **CLAUDE.md** — check if it exists.
    - If missing, create it with a `# <project-name> — Claude Code Context` header and the following content:
@@ -70,7 +70,7 @@ Ensure all standard project documentation files and directories exist at the pro
        ```markdown
        | [docs/solutions/](docs/solutions/) | Compounding knowledge — bug postmortems, patterns, and gotchas captured by ce-compound |
        ```
-       If the Project Docs table itself is missing from the file, warn the user rather than adding one.
+       If the Project Docs table itself is missing from the file, warn the user rather than adding one — ask first.
      - Check whether the file contains a `## Documentation Standards` section. If the section is missing, append the Documentation Standards block (shown in the "if missing" template above) to the end of the file.
 
 4. **docs/, docs/notes/, and docs/solutions/** — check if the directories exist.
