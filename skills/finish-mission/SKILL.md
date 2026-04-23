@@ -32,16 +32,16 @@ Complete all post-implementation steps after a mission is done: update every rel
    - **Pattern/convention** — a design decision or code convention worth future adherence
    - **Gotcha** — a non-obvious constraint, workaround, or environment quirk discovered during the work
 
-   **Skip lesson identification entirely** if the mission was mechanical — renames, version bumps, dependency updates, boilerplate. State this plainly and proceed to step 4.
+   **Skip lesson identification entirely** if the mission was clearly mechanical — renames, version bumps, dependency updates, boilerplate. When in doubt, propose the candidate; the user can decline. State the skip reason plainly and proceed to step 4.
 
-   **Propose candidates to the user in batch form:**
+   **Propose candidates to the user in batch form. Present this prompt to the user verbatim (adjusting only the count and lesson entries):**
    > Found N candidate lessons:
    > 1. [type]: one-line summary — why it's reusable
    > 2. [type]: one-line summary — why it's reusable
    >
    > Capture? Respond per lesson: `y` (full mode), `lightweight` (single-pass), or `n` (skip).
 
-   **For each confirmed lesson (`y`)**, invoke `ce-compound` with captain's writing standard in the context arg:
+   **For each confirmed lesson (`y`)**, invoke `ce-compound` with captain's writing standard (canonical source: `skills/writing-standard/RULES.md`) injected inline into the context arg. `ce-compound` accepts a single free-form `[context]` argument — pass the lesson summary and the writing standard as one string, separated by an em-dash as shown:
    ```
    /ce-compound [lesson summary] — writing standard: output must be stateless (no "NEW:", "as discussed", first-person voice, temporal anchors, documented misunderstandings) and reflect current understanding only (no stale concepts, no traces of wrong paths)
    ```
@@ -51,7 +51,7 @@ Complete all post-implementation steps after a mission is done: update every rel
    /ce-compound --lightweight [lesson summary] — writing standard: output must be stateless (no "NEW:", "as discussed", first-person voice, temporal anchors, documented misunderstandings) and reflect current understanding only (no stale concepts, no traces of wrong paths)
    ```
 
-   If no candidates are found, state that plainly and proceed to step 4. The review gate in step 4 will cover any files ce-compound produced via `git diff`.
+   **Sequencing:** Invoke `/ce-compound` sequentially, one per confirmed lesson, completing each capture before starting the next. If no candidates are found, state that plainly and proceed to step 4. The review gate in step 4 will cover any files ce-compound produced via `git diff`.
 
 4. **Review all written content against the writing standard** — run `git diff` to confirm which docs were actually modified, then re-read each one and check against both directives from `skills/writing-standard/RULES.md`:
    - **Stateless:** no session-relative labels ("NEW:", "UPDATED:"), no back-references ("as discussed", "not like this [X]"), no first-person session voice, no temporal anchors ("recently added")
