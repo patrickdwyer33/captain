@@ -14,8 +14,8 @@ claude plugin install superpowers
 The `compound-engineering-plugin` must also be installed. Captain's `finish-mission` skill invokes its `ce-compound` skill to capture reusable lessons to `docs/solutions/`.
 
 ```
-/plugin marketplace add EveryInc/compound-engineering-plugin
-/plugin install compound-engineering
+claude plugin marketplace add EveryInc/compound-engineering-plugin
+claude plugin install compound-engineering
 ```
 
 `jq` must also be installed:
