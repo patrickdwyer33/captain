@@ -24,7 +24,11 @@ Ensure all standard project documentation files and directories exist at the pro
      | [IDEAS.md](IDEAS.md) | Long-term ideas and future directions, no commitment implied |
      | [docs/solutions/](docs/solutions/) | Compounding knowledge — bug postmortems, patterns, and gotchas captured by ce-compound |
      ```
-   - If it exists, leave it alone.
+   - If it exists, check whether the Project Docs table contains a row for `docs/solutions/`. If the row is missing, insert it immediately after the `IDEAS.md` row:
+     ```markdown
+     | [docs/solutions/](docs/solutions/) | Compounding knowledge — bug postmortems, patterns, and gotchas captured by ce-compound |
+     ```
+     If the Project Docs table itself is missing from the file, warn the user rather than adding one — do not auto-insert the whole table.
 
 3. **CLAUDE.md** — check if it exists.
    - If missing, create it with a `# <project-name> — Claude Code Context` header and the following content:
@@ -61,7 +65,13 @@ Ensure all standard project documentation files and directories exist at the pro
 
      ## Key Patterns
      ```
-   - If it exists, check whether it contains a `## Documentation Standards` section. If the section is missing, append the Documentation Standards block (shown in the "if missing" template above) to the end of the file.
+   - If it exists, perform two idempotent checks:
+     - Check whether the Project Docs table contains a row for `docs/solutions/`. If the row is missing, insert it immediately after the `IDEAS.md` row:
+       ```markdown
+       | [docs/solutions/](docs/solutions/) | Compounding knowledge — bug postmortems, patterns, and gotchas captured by ce-compound |
+       ```
+       If the Project Docs table itself is missing from the file, warn the user rather than adding one.
+     - Check whether the file contains a `## Documentation Standards` section. If the section is missing, append the Documentation Standards block (shown in the "if missing" template above) to the end of the file.
 
 4. **docs/, docs/notes/, and docs/solutions/** — check if the directories exist.
    - Create `docs/` if missing.
