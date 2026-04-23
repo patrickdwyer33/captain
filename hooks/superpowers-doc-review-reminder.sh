@@ -47,6 +47,6 @@ fi
 jq -n --arg path "$file_path" --arg doc_type "$doc_type" '{
   hookSpecificOutput: {
     hookEventName: "PostToolUse",
-    additionalContext: "A superpowers \($doc_type) was just written to `\($path)`. Before continuing, invoke the compound-engineering:ce-doc-review skill on this file via: Skill(\"compound-engineering:ce-doc-review\", \"\($path)\"). This is a planned handoff after superpowers spec/plan creation."
+    additionalContext: "A superpowers \($doc_type) was just written to `\($path)`. Ask the user whether they want to run the compound-engineering:ce-doc-review skill on it before continuing. If yes, invoke Skill(\"compound-engineering:ce-doc-review\", \"\($path)\"). If no, proceed with the original flow and do not ask again for this file. Do not run the review without the user'\''s explicit go-ahead."
   }
 }'

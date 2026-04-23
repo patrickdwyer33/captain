@@ -54,7 +54,7 @@ After enabling, captain will update on every session start. If you update but st
 
 ## Hooks
 
-Captain ships one `PostToolUse` hook that nudges Claude to invoke `compound-engineering:ce-doc-review` after a superpowers spec or plan is written. It fires when a `Write` or `Edit` produces a file matching `docs/superpowers/specs/*.md` or `docs/superpowers/plans/*.md`, with a 10-minute per-path cooldown so that `ce-doc-review`'s own `safe_auto` edits don't re-trigger it. State lives at `~/.claude/state/captain-superpowers-doc-review-cooldown.txt`.
+Captain ships one `PostToolUse` hook that, after a superpowers spec or plan is written, asks you whether to run `compound-engineering:ce-doc-review` on it. It fires when a `Write` or `Edit` produces a file matching `docs/superpowers/specs/*.md` or `docs/superpowers/plans/*.md`, and Claude will prompt you — the review runs only if you say yes. A 10-minute per-path cooldown prevents `ce-doc-review`'s own `safe_auto` edits from re-triggering the prompt. State lives at `~/.claude/state/captain-superpowers-doc-review-cooldown.txt`.
 
 ## Declaring as a Project Dependency
 
