@@ -52,6 +52,10 @@ After enabling, captain will update on every session start. If you update but st
 | `captain:init-project-docs` | Initialize standard project docs at the project root |
 | `captain:new-project` | Scaffold a new project in `~/dev` with a git repo, private GitHub remote, and standard docs |
 
+## Hooks
+
+Captain ships one `PostToolUse` hook that nudges Claude to invoke `compound-engineering:ce-doc-review` after a superpowers spec or plan is written. It fires when a `Write` or `Edit` produces a file matching `docs/superpowers/specs/*.md` or `docs/superpowers/plans/*.md`, with a 10-minute per-path cooldown so that `ce-doc-review`'s own `safe_auto` edits don't re-trigger it. State lives at `~/.claude/state/captain-superpowers-doc-review-cooldown.txt`.
+
 ## Declaring as a Project Dependency
 
 Claude Code has no native plugin dependency mechanism. Signal that a project requires captain by adding this to the project's `CLAUDE.md`:
