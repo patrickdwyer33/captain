@@ -1,7 +1,7 @@
 {
   "name": "captain",
   "description": "Task and project management skills for Claude Code. Requires superpowers and compound-engineering plugins.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "Patrick Dwyer",
     "email": "patrick@patrickdwyer.com"
