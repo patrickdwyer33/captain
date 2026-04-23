@@ -22,6 +22,7 @@ Ensure all standard project documentation files and directories exist at the pro
      | [TODO.md](TODO.md) | Free-form scratchpad for quick notes, reminders, and in-progress thoughts |
      | [GAPS.md](GAPS.md) | Known code stubs, unimplemented functions, and placeholder values |
      | [IDEAS.md](IDEAS.md) | Long-term ideas and future directions, no commitment implied |
+     | [docs/solutions/](docs/solutions/) | Compounding knowledge — bug postmortems, patterns, and gotchas captured by ce-compound |
      ```
    - If it exists, leave it alone.
 
@@ -36,6 +37,7 @@ Ensure all standard project documentation files and directories exist at the pro
      | [TODO.md](TODO.md) | Free-form scratchpad for quick notes, reminders, and in-progress thoughts |
      | [GAPS.md](GAPS.md) | Known code stubs, unimplemented functions, and placeholder values |
      | [IDEAS.md](IDEAS.md) | Long-term ideas and future directions, no commitment implied |
+     | [docs/solutions/](docs/solutions/) | Compounding knowledge — bug postmortems, patterns, and gotchas captured by ce-compound |
 
      ## Documentation Standards
 
