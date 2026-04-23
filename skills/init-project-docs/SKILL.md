@@ -61,10 +61,12 @@ Ensure all standard project documentation files and directories exist at the pro
      ```
    - If it exists, check whether it contains a `## Documentation Standards` section. If the section is missing, append the Documentation Standards block (shown in the "if missing" template above) to the end of the file.
 
-4. **docs/ and docs/notes/** — check if the directories exist.
+4. **docs/, docs/notes/, and docs/solutions/** — check if the directories exist.
    - Create `docs/` if missing.
    - Create `docs/notes/` if missing.
+   - Create `docs/solutions/` if missing.
    - Place a `.gitkeep` in `docs/notes/` if it's empty so it's tracked by git.
+   - Place a `.gitkeep` in `docs/solutions/` if it's empty so it's tracked by git.
 
 5. **MISSIONS.md** — check if it exists.
    - If missing, it will be created by the generate script in step 9. Do not create it manually.
