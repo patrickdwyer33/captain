@@ -11,7 +11,7 @@ Begin implementing a mission recorded in `MISSIONS.md` at the root of the curren
 
 1. **Regenerate MISSIONS.md** — run the generate script first to ensure `MISSIONS.md` reflects the current state of `.captain/missions.jsonl`, including any hand-edits the user may have made:
    ```bash
-   bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/generate.sh"
    ```
    If the generate script fails (e.g. jq not installed or corrupt JSONL), warn the user and proceed with whatever `MISSIONS.md` currently contains.
 

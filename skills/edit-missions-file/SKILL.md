@@ -14,7 +14,7 @@ description: Use when the user wants to directly edit MISSIONS.md or COMPLETED.m
 | Add a new mission | `captain:create-mission` |
 | Mark a mission done | `captain:remove-mission` (Complete path) |
 | Cancel / delete a mission | `captain:remove-mission` (Delete path) |
-| Edit a mission's fields (title, goal, background, notes, body) | Edit the record in `.captain/missions.jsonl` directly, then run `bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh` |
+| Edit a mission's fields (title, goal, background, notes, body) | Edit the record in `.captain/missions.jsonl` directly, then run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/generate.sh"` |
 
 ## Steps
 

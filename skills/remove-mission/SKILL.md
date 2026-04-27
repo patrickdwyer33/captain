@@ -51,7 +51,7 @@ Move a completed mission to `.captain/completed.jsonl`, or permanently delete a 
 
 8. **Regenerate markdown**:
    ```bash
-   bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/generate.sh"
    ```
 
 9. **Confirm** — tell the user the mission was moved to Completed.
@@ -69,7 +69,7 @@ Move a completed mission to `.captain/completed.jsonl`, or permanently delete a 
 
 6. **Regenerate markdown**:
    ```bash
-   bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/generate.sh"
    ```
 
 7. **Confirm** — tell the user the mission was permanently deleted.

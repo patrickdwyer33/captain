@@ -67,7 +67,7 @@ Add a new mission to the JSONL data layer at `.captain/missions.jsonl` and regen
 
 7. **Regenerate markdown** — run:
    ```bash
-   bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/generate.sh"
    ```
 
 8. **Confirm** — tell the user the mission was added and show the new entry from `MISSIONS.md`.

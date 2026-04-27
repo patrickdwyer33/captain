@@ -114,7 +114,7 @@ Ensure all standard project documentation files and directories exist at the pro
    - Check `.gitignore`: if `.captain` or `.captain/` appears there, warn the user — these files are the source of truth and must be committed to the repo.
    - Run the generate script to produce `MISSIONS.md` and `COMPLETED.md`:
      ```bash
-     bash ~/.claude/plugins/marketplaces/captain/scripts/generate.sh
+     bash "${CLAUDE_PLUGIN_ROOT}/scripts/generate.sh"
      ```
 
 10. **Confirm** — report which files/directories were created, which already existed, and any structural issues found. Include the `.captain/` directory and JSONL files in the report.
