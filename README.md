@@ -11,13 +11,6 @@ claude plugin marketplace add obra/superpowers-marketplace
 claude plugin install superpowers
 ```
 
-The `compound-engineering-plugin` must also be installed. Captain's `finish-mission` skill invokes its `ce-compound` skill to capture reusable lessons to `docs/solutions/`.
-
-```
-claude plugin marketplace add EveryInc/compound-engineering-plugin
-claude plugin install compound-engineering
-```
-
 `jq` must also be installed:
 - macOS: `brew install jq`
 - Linux: `sudo apt install jq` or `sudo yum install jq`
@@ -52,17 +45,12 @@ After enabling, captain will update on every session start. If you update but st
 | `captain:init-project-docs` | Initialize standard project docs at the project root |
 | `captain:new-project` | Scaffold a new project in `~/dev` with a git repo, private GitHub remote, and standard docs |
 
-## Hooks
-
-Captain ships one `PostToolUse` hook that, after a superpowers spec or plan is written, asks you whether to run `compound-engineering:ce-doc-review` on it. It fires when a `Write` or `Edit` produces a file matching `docs/superpowers/specs/*.md` or `docs/superpowers/plans/*.md`, and Claude will prompt you — the review runs only if you say yes. A 10-minute per-path cooldown prevents `ce-doc-review`'s own `safe_auto` edits from re-triggering the prompt. State lives at `~/.claude/state/captain-superpowers-doc-review-cooldown.txt`.
-
 ## Declaring as a Project Dependency
 
 Claude Code has no native plugin dependency mechanism. Signal that a project requires captain by adding this to the project's `CLAUDE.md`:
 
     ## Required Plugins
     - superpowers — https://github.com/obra/superpowers
-    - compound-engineering — https://github.com/EveryInc/compound-engineering-plugin
     - captain — https://github.com/patrickdwyer33/captain
 
 Team members who open the project in Claude Code will see this requirement in their context.
